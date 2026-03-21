@@ -1,0 +1,27 @@
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import LandingPage from './pages/LandingPage';
+import FarmerOnboarding from './pages/FarmerOnboarding';
+import FarmerDashboard from './pages/FarmerDashboard';
+import FarmerCheckin from './pages/FarmerCheckin';
+import AdminDashboard from './pages/AdminDashboard';
+import MitraPortal from './pages/MitraPortal';
+import QRPage from './pages/QRPage';
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />
+        <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
+        <Route path="/farmer/checkin" element={<FarmerCheckin />} />
+        <Route path="/farmer" element={<FarmerOnboarding />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/mitra" element={<MitraPortal />} />
+        <Route path="/qr" element={<QRPage />} />
+      </Routes>
+    </AuthProvider>
+  );
+}
