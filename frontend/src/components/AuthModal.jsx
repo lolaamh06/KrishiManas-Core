@@ -40,29 +40,26 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
         });
       }
 
-      if (!isLogin) {
-        // Registration: Route new farmers to the Onboarding Questionnaire
-        if (defaultRole === 'farmer') {
-          onClose();
-          return navigate('/farmer/onboarding', { 
-            state: { 
-              authName: finalUser?.name || name || email.split('@')[0], 
-              authEmail: email 
-            } 
-          });
-        } else if (defaultRole === 'admin') {
-          localStorage.setItem('krishimanas_admin', JSON.stringify({ 
-            name: finalUser.name || name || email.split('@')[0], 
-            email, 
-            district: finalUser.district || district 
-          }));
-        } else if (defaultRole === 'mitra') {
-           // Firestore automatically syncs the new registration to the Admin Dashboard
-        }
+      // Ensure portal-specific storage is populated so they have separate, isolated info
+      if (defaultRole === 'farmer') {
+        localStorage.setItem('krishimanas_farmer', JSON.stringify({ 
+          name: finalUser.name || name || email.split('@')[0], 
+          email, 
+          district: finalUser.district || district, 
+          score: 55, 
+          crop: 'Coffee', // Hassan context
+          loanDaysOverdue: 20 
+        }));
+      } else if (defaultRole === 'admin') {
+        localStorage.setItem('krishimanas_admin', JSON.stringify({ 
+          name: finalUser.name || name || email.split('@')[0], 
+          email, 
+          district: finalUser.district || district 
+        }));
       }
 
       onClose();
-      // Redirect based on role for Logins and non-farmer Registers
+      // Redirect based on role
       if (defaultRole === 'mitra') navigate('/mitra');
       if (defaultRole === 'farmer') navigate('/farmer/dashboard');
       if (defaultRole === 'admin') navigate('/admin');

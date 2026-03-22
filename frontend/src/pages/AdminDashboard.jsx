@@ -12,8 +12,6 @@ import {
 } from 'recharts';
 import { sendSMS, SMS_TEMPLATES } from '../utils/mockTwilio';
 import { matchSchemes } from '../utils/matchSchemes';
-import { db } from '../utils/firebase';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 
 /* ─── Seeded Intelligence Data ─── */
 const SEEDED_MITRAS = [
@@ -79,7 +77,7 @@ export default function AdminDashboard() {
     }
   }, [navigate]);
 
-  const [viewMode, setViewMode]     = useState('global'); // 'global' | 'farmers' | 'mitras'
+  const [viewMode, setViewMode]     = useState('farmers'); // 'farmers' | 'mitras'
   const [farmers, setFarmers]       = useState(SEEDED_FARMERS);
   const [mitras, setMitras]         = useState(SEEDED_MITRAS);
   const [globalLogs, setGlobalLogs] = useState(SEEDED_LOGS);
@@ -88,38 +86,31 @@ export default function AdminDashboard() {
   const [alertLog, setAlertLog]     = useState([]);
   const [liveMode, setLiveMode]     = useState(false);
 
-  // Real-time synchronization from Firebase Firestore
+  // Real-time synchronization for check-ins and SOS
   useEffect(() => {
-    const qUsers = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-    const unsubUsers = onSnapshot(qUsers, (snapshot) => {
-      const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const liveFarmers = allUsers.filter(u => u.roles?.includes('farmer'));
-      const liveMitras = allUsers.filter(u => u.roles?.includes('mitra'));
-      
-      // We overwrite the seed state once Firebase is successfully connected
-      setFarmers(liveFarmers);
-      setMitras(liveMitras);
-    }, (error) => console.error("Firebase Users Sync Error:", error));
+    const handleSync = () => {
+      const lastEventRaw = localStorage.getItem('krishimanas_last_event');
+      if (!lastEventRaw) return;
+      try {
+        const event = JSON.parse(lastEventRaw);
+        if (event.type === 'SCORE_UPDATE') {
+          setFarmers(prev => prev.map(f => {
+            if (f.id === event.farmerId || f.name === event.farmerName) {
+              return { ...f, score: event.newScore, status: event.newScore >= 65 ? 'Red' : event.newScore >= 35 ? 'Yellow' : 'Green' };
+            }
+            return f;
+          }));
+        }
+      } catch (e) {
+        console.error("Sync error", e);
+      }
+    };
 
-    // 2. Sync Global Activities (Logs)
-    const qLogs = query(collection(db, 'global_activities'), orderBy('timestamp', 'desc'));
-    const unsubLogs = onSnapshot(qLogs, (snapshot) => {
-      const liveLogs = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          type: (data.type || 'LOG').split('_')[0],
-          msg: data.message,
-          time: data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'Just now',
-          rawTime: data.timestamp ? data.timestamp.toMillis() : Date.now()
-        };
-      }).sort((a,b) => b.rawTime - a.rawTime);
-      setGlobalLogs(liveLogs);
-    }, (error) => console.error("Firebase Logs Sync Error:", error));
-
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('krishimanas_update', (e) => handleSync()); // Local event in same tab
     return () => {
-      unsubUsers();
-      unsubLogs();
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('krishimanas_update', handleSync);
     };
   }, []);
 
@@ -143,10 +134,10 @@ export default function AdminDashboard() {
     red: farmers.filter(f => f.status === 'Red').length,
     yellow: farmers.filter(f => f.status === 'Yellow').length,
     green: farmers.filter(f => f.status === 'Green').length,
-    avg: farmers.length ? Math.round(farmers.reduce((s, f) => s + f.score, 0) / farmers.length) : 0
+    avg: Math.round(farmers.reduce((s, f) => s + f.score, 0) / farmers.length)
   };
 
-  const talukData = [...new Set(farmers.filter(f => f.taluk).map(f => f.taluk))].map(t => ({
+  const talukData = [...new Set(farmers.map(f => f.taluk))].map(t => ({
     name: t,
     Red: farmers.filter(f => f.taluk === t && f.status === 'Red').length,
     Yellow: farmers.filter(f => f.taluk === t && f.status === 'Yellow').length,
@@ -167,64 +158,31 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-teal-500/30 overflow-hidden">
-      
-      {/* ─── 3-Tab Sidebar ─── */}
-      <aside className="w-72 bg-[#0a0f1d] border-r border-white/5 flex flex-col hidden md:flex shrink-0">
-        <div className="p-6 pb-4">
-          <button onClick={() => navigate('/')} className="flex items-center gap-3 text-teal-400 font-black text-2xl tracking-tighter hover:opacity-80">
-            <Home size={26} strokeWidth={3} /> KrishiManas
+    <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-teal-500/30 overflow-x-hidden">
+      {/* Header */}
+      <nav className="h-16 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-[1000]">
+        <div className="flex items-center gap-6">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-teal-500 font-black text-2xl tracking-tighter transition-all hover:opacity-80">
+            <Home size={22} /> KrishiManas
           </button>
-          <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2 flex items-center gap-1.5"><MapPin size={12}/> {adminData?.district || 'Hassan'} Command</div>
-        </div>
-
-        <nav className="flex-1 px-4 mt-6 space-y-2 relative z-10">
-          <button 
-            onClick={() => setViewMode('global')}
-            className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${viewMode === 'global' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-          >
-            <Activity size={18} /> Global Operations
-          </button>
-          
-          <button 
-            onClick={() => setViewMode('farmers')}
-            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${viewMode === 'farmers' ? 'bg-teal-500 text-[#020617] shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-          >
-            <div className="flex items-center gap-3"><Users size={18} /> Farmer Matrix</div>
-            {stats.red > 0 && <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] ${viewMode === 'farmers' ? 'bg-red-500 text-white' : 'bg-red-500/20 text-red-500'}`}>{stats.red}</span>}
-          </button>
-          
-          <button 
-            onClick={() => setViewMode('mitras')}
-            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${viewMode === 'mitras' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-          >
-            <div className="flex items-center gap-3"><Users size={18} /> Mitra Network</div>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] ${viewMode === 'mitras' ? 'bg-[#020617] text-white' : 'bg-blue-500/20 text-blue-400'}`}>{mitras.length}</span>
-          </button>
-        </nav>
-
-        <div className="p-6 mt-auto">
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-            <div className={`text-[10px] font-black uppercase tracking-widest ${liveMode ? 'text-teal-400' : 'text-slate-500'}`}>Live Feed</div>
-            <button onClick={() => setLiveMode(!liveMode)} className={`w-10 h-5 rounded-full relative transition-all ${liveMode ? 'bg-teal-500' : 'bg-slate-700'}`}>
-               <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${liveMode ? 'left-[22px]' : 'left-0.5'}`} />
-            </button>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+             <MapPin size={12} className="text-teal-500" /> {adminData?.district || 'Hassan'} District Command
           </div>
         </div>
-      </aside>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+             <div className={`w-2 h-2 rounded-full ${liveMode ? 'bg-system-green animate-pulse shadow-[0_0_8px_#00e676]' : 'bg-slate-700'}`}></div>
+             <button onClick={() => setLiveMode(!liveMode)} className={`text-[10px] font-black uppercase tracking-widest ${liveMode ? 'text-teal-500' : 'text-slate-500 hover:text-slate-300'}`}>
+               {liveMode ? 'Live Mode Active' : 'Enable Live Feed'}
+             </button>
+          </div>
+          <div className="text-xs font-mono text-slate-500 tabular-nums bg-white/5 px-3 py-1 rounded-lg border border-white/5">
+             {new Date().toLocaleTimeString('en-IN', { hour12: false })}
+          </div>
+        </div>
+      </nav>
 
-      {/* ─── Main Content ─── */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        
-        {/* Mobile Header (Hidden on Desktop since Sidebar handles it) */}
-        <nav className="h-16 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-6 md:hidden sticky top-0 z-[1000]">
-           <button onClick={() => navigate('/')} className="flex items-center gap-2 text-teal-500 font-black text-xl tracking-tighter">
-             <Home size={20} /> KrishiManas
-           </button>
-        </nav>
-
-        {/* Scrollable Work Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+      <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
         
         {/* Top Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -250,7 +208,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="h-4 w-[1px] bg-white/10"></div>
                 <div className="flex gap-4 text-[9px] font-bold uppercase text-slate-400">
-                   {viewMode === 'farmers' || viewMode === 'global' ? (
+                   {viewMode === 'farmers' ? (
                      <>
                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span> Red</span>
                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500"></span> Yellow</span>
@@ -271,11 +229,11 @@ export default function AdminDashboard() {
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                 
                 {/* Render Farmers */}
-                {(viewMode === 'farmers' || viewMode === 'global') && farmers.filter(f => f.lat && f.lng).map(f => (
+                {viewMode === 'farmers' && farmers.map(f => (
                   <CircleMarker
                     key={f.id}
                     center={[f.lat, f.lng]}
-                    radius={f.status === 'Red' ? 12 : (f.status === 'Yellow' ? 10 : 8)}
+                    radius={f.status === 'Red' ? 12 : f.status === 'Yellow' ? 9 : 7}
                     pathOptions={{
                       fillColor: STATUS_COLOR[f.status],
                       color: '#ffffff',
@@ -300,7 +258,7 @@ export default function AdminDashboard() {
                 ))}
 
                 {/* Render Mitras */}
-                {(viewMode === 'mitras' || viewMode === 'global') && mitras.filter(m => m.lat && m.lng).map(m => (
+                {viewMode === 'mitras' && mitras.map(m => (
                   <CircleMarker
                     key={m.id}
                     center={[m.lat, m.lng]}
@@ -330,62 +288,60 @@ export default function AdminDashboard() {
               </MapContainer>
             </div>
 
-            {/* Sub Charts (Global Only) */}
-            {viewMode === 'global' && (
-              <div className="grid md:grid-cols-2 gap-6 animate-in fade-in duration-500">
-                {/* Trend Chart */}
-                <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6 h-[320px] flex flex-col">
-                  <div className="flex items-center gap-2 mb-6">
-                    <LineIcon size={16} className="text-teal-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Historical Distress Trend (14D)</span>
-                  </div>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={TREND_DATA}>
-                        <defs>
-                          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                        <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} domain={[0, 100]} />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
-                          itemStyle={{ color: '#14b8a6', fontWeight: 'bold' }}
-                        />
-                        <Area type="monotone" dataKey="score" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#trendGrad)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
+            {/* Sub Charts */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Trend Chart */}
+              <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6 h-[320px] flex flex-col">
+                <div className="flex items-center gap-2 mb-6">
+                  <LineIcon size={16} className="text-teal-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Historical Distress Trend (14D)</span>
                 </div>
-
-                {/* Bar Chart */}
-                <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6 h-[320px] flex flex-col">
-                  <div className="flex items-center gap-2 mb-6">
-                    <BarChart3 size={16} className="text-teal-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sector Risk Distribution</span>
-                  </div>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={talukData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} horizontal={false} />
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" stroke="#ffffff30" fontSize={9} width={90} axisLine={false} tickLine={false} />
-                        <RechartsTooltip 
-                          cursor={{fill: '#ffffff05'}}
-                          contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
-                        />
-                        <Bar dataKey="Red" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} barSize={10} />
-                        <Bar dataKey="Yellow" stackId="a" fill="#f59e0b" />
-                        <Bar dataKey="Green" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={TREND_DATA}>
+                      <defs>
+                        <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                      <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} domain={[0, 100]} />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
+                        itemStyle={{ color: '#14b8a6', fontWeight: 'bold' }}
+                      />
+                      <Area type="monotone" dataKey="score" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#trendGrad)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-            )}
+
+              {/* Bar Chart */}
+              <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6 h-[320px] flex flex-col">
+                <div className="flex items-center gap-2 mb-6">
+                  <BarChart3 size={16} className="text-teal-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sector Risk Distribution</span>
+                </div>
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={talukData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} horizontal={false} />
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" stroke="#ffffff30" fontSize={9} width={90} axisLine={false} tickLine={false} />
+                      <RechartsTooltip 
+                        cursor={{fill: '#ffffff05'}}
+                        contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
+                      />
+                      <Bar dataKey="Red" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} barSize={10} />
+                      <Bar dataKey="Yellow" stackId="a" fill="#f59e0b" />
+                      <Bar dataKey="Green" stackId="a" fill="#10b981" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right: Farmer Details & Actions */}
@@ -397,7 +353,7 @@ export default function AdminDashboard() {
                   <Info size={240} />
                </div>
                
-               {viewMode !== 'global' && selected ? (
+               {selected ? (
                  <div className="relative z-10 space-y-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex justify-between items-start">
                        <div>
@@ -470,22 +426,12 @@ export default function AdminDashboard() {
                       </div>
                     )}
 
-                    <button onClick={() => {
-                        const newLogs = [{ id: Date.now(), type: 'CLAIM', msg: `Admin forced immediate support for ${selected.name}`, time: 'Just now' }, ...globalLogs];
-                        setGlobalLogs(newLogs);
-                        setAlertLog([`✓ SUPPORT DISPATCHED: ${selected.name}`, ...alertLog]);
-                        const escalateEvent = { type: 'SOS', farmerId: selected.id, farmerName: selected.name, timestamp: Date.now() };
-                        localStorage.setItem('krishimanas_last_event', JSON.stringify(escalateEvent));
-                        window.dispatchEvent(new Event('storage'));
-                        alert(`Successfully pushed direct order to local Mitra network.`);
-                      }} 
-                      className={`w-full py-4 font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition-all hover:scale-[1.02] shadow-xl ${selected?.score ? 'bg-teal-500 text-[#020617] hover:bg-teal-400 shadow-teal-500/10' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/10'}`}
-                    >
+                    <button className={`w-full py-4 font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition-all hover:scale-[1.02] shadow-xl ${selected?.score ? 'bg-teal-500 text-[#020617] hover:bg-teal-400 shadow-teal-500/10' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/10'}`}>
                        {selected?.score ? 'Deploy Immediate Support' : 'Dispatch Assignment'}
                     </button>
                  </div>
-               ) : viewMode === 'global' ? (
-                 <div className="h-[460px] flex flex-col relative animate-in fade-in">
+               ) : (
+                 <div className="h-[460px] flex flex-col relative">
                     <div className="flex items-center gap-2 mb-4">
                        <Activity size={18} className="text-teal-500" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Global Operations Feed</span>
@@ -510,30 +456,15 @@ export default function AdminDashboard() {
                     </div>
                     <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#0f172a] to-transparent pointer-events-none" />
                  </div>
-               ) : (
-                 <div className="h-full flex items-center justify-center p-8 text-center text-slate-500 animate-in fade-in">
-                    <div>
-                       <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                          <Users size={24} className="text-slate-400" />
-                       </div>
-                       <div className="text-[10px] font-black uppercase tracking-widest">Select an entity from the registry to view intelligence dossier.</div>
-                    </div>
-                 </div>
                )}
             </div>
 
-            {/* Emergency Protocols : Display heavily in Global View */}
-            {viewMode === 'global' && (
-              <div className={`rounded-3xl p-6 border transition-all duration-1000 animate-in fade-in fade-in-0 slide-in-from-bottom-4 ${stats.red > 0 ? 'bg-red-500/5 border-red-500/20 shadow-[0_0_30px_rgb(239,68,68,0.05)]' : 'bg-white/5 border-white/5'}`}>
-                 <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-2 rounded-xl ${stats.red > 0 ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-slate-500'}`}>
-                      <Bell size={20} className={stats.red > 0 ? 'animate-pulse' : ''} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-black text-white uppercase tracking-tighter">All India Radio Hassan</div>
-                      <div className="text-[9px] font-black uppercase tracking-[0.2em] mt-0.5 text-slate-400">Emergency Broadcast Protocol</div>
-                    </div>
-                 </div>
+            {/* Emergency Protocols */}
+            <div className={`rounded-3xl p-6 border transition-all duration-1000 ${stats.red > 0 ? 'bg-red-500/5 border-red-500/20' : 'bg-white/5 border-border-white/5'}`}>
+               <div className="flex items-center gap-2 mb-4">
+                  <Bell size={18} className={stats.red > 0 ? 'text-red-500 animate-pulse' : 'text-slate-500'} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Emergency Broadcast Protocol</span>
+               </div>
                <p className="text-[10px] text-slate-400 font-medium leading-relaxed uppercase tracking-tighter mb-6 opacity-70">
                   Mass notification system for <span className="text-red-500 font-black">{stats.red} Farmers</span> in critical sectors. 
                   Encrypted SMS will be dispatched to assigned regional centers.
@@ -557,34 +488,42 @@ export default function AdminDashboard() {
                  </div>
                )}
             </div>
-            )}
           </aside>
         </div>
 
-        {/* Tactical Registry Table (Hidden on Global View) */}
-        {viewMode !== 'global' && (
-          <div className="bg-[#0f172a] border border-white/5 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-            <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-               <div className="flex items-center gap-6">
-                  <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${viewMode === 'farmers' ? 'text-teal-400' : 'text-blue-400'}`}>
-                    {viewMode === 'farmers' ? <><Search size={16} /> Farmer Entities Database</> : <><Users size={16} /> Mitra Volunteers Database</>}
-                  </div>
-               </div>
-               <span className="bg-white/5 px-2 py-0.5 rounded text-[8px] font-black text-slate-500 uppercase">
-                  {viewMode === 'farmers' ? farmers.length : mitras.length} Units Active
-               </span>
-            </div>
-            <div className="overflow-x-auto min-h-[300px]">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.01] text-[9px] uppercase font-black text-slate-500 tracking-widest">
-                    <th className="px-6 py-4">Status / Role</th>
-                    <th className="px-6 py-4">{viewMode === 'farmers' ? 'Farmer Entity' : 'Volunteer Name'}</th>
-                    <th className="px-6 py-4">Operational Sector</th>
-                    <th className="px-6 py-4">{viewMode === 'farmers' ? 'Primary Crop' : 'Active Cases'}</th>
-                    <th className="px-6 py-4 text-right tabular-nums">{viewMode === 'farmers' ? 'Distress Index' : 'Resolved'}</th>
-                  </tr>
-                </thead>
+        {/* Tactical Registry Table */}
+        <div className="bg-[#0f172a] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+             <div className="flex items-center gap-6">
+                <button
+                  onClick={() => setViewMode('farmers')} 
+                  className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${viewMode === 'farmers' ? 'text-teal-400' : 'text-slate-500 hover:text-white'}`}
+                >
+                  <Search size={16} /> Farmer Entities
+                </button>
+                <div className="w-[1px] h-4 bg-white/10" />
+                <button
+                  onClick={() => setViewMode('mitras')} 
+                  className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${viewMode === 'mitras' ? 'text-blue-400' : 'text-slate-500 hover:text-white'}`}
+                >
+                  <Users size={16} /> Mitra Volunteers
+                </button>
+             </div>
+             <span className="bg-white/5 px-2 py-0.5 rounded text-[8px] font-black text-slate-500 uppercase">
+                {viewMode === 'farmers' ? farmers.length : mitras.length} Units Active
+             </span>
+          </div>
+          <div className="overflow-x-auto min-h-[300px]">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 bg-white/[0.01] text-[9px] uppercase font-black text-slate-500 tracking-widest">
+                  <th className="px-6 py-4">Status / Role</th>
+                  <th className="px-6 py-4">{viewMode === 'farmers' ? 'Farmer Entity' : 'Volunteer Name'}</th>
+                  <th className="px-6 py-4">Operational Sector</th>
+                  <th className="px-6 py-4">{viewMode === 'farmers' ? 'Primary Crop' : 'Active Cases'}</th>
+                  <th className="px-6 py-4 text-right tabular-nums">{viewMode === 'farmers' ? 'Distress Index' : 'Resolved'}</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-white/[0.02]">
                 {viewMode === 'farmers' ? (
                   [...farmers].sort((a,b) => b.score - a.score).map(f => (
@@ -643,9 +582,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-        )}
 
-      </div>
       </div>
     </div>
   );

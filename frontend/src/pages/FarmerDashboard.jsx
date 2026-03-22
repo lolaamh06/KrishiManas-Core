@@ -17,7 +17,6 @@ const handleFileUpload = (schemeId, docName, file, uploadStatus, setUploadStatus
 };
 import { getMockWeather } from '../utils/mockWeather';
 import { matchSchemes } from '../utils/matchSchemes'; 
-import { fb } from '../utils/firebase';
 
 export default function FarmerDashboard() {
   const { lang } = useLang();
@@ -70,17 +69,30 @@ export default function FarmerDashboard() {
     speak(text, lang === 'en' ? 'en-IN' : 'kn-IN');
   };
 
-  const handleSOS = async () => {
+  const handleSOS = () => {
     setSosStatus('connecting');
-    try {
-      await fb.triggerSOS(farmer.id, farmer.name, farmer.taluk || 'Hassan');
+    // Signal to Mitra Portal via localStorage (Unified Event Bus)
+    const sosEvent = { 
+      type: 'SOS',
+      farmerId: farmer.id, 
+      farmerName: farmer.name, 
+      lat: farmer.lat || 13.0, 
+      lng: farmer.lng || 76.1, 
+      timestamp: Date.now() 
+    };
+    localStorage.setItem('krishimanas_last_event', JSON.stringify(sosEvent));
+    localStorage.setItem('krishimanas_sos_signal', JSON.stringify(sosEvent)); // Backward compatibility
+    
+    // Fire events
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('krishimanas_update', { detail: sosEvent }));
+    
+    // Simulate connection delay
+    setTimeout(() => {
       setSosStatus('notified');
       // Auto-reset after a while
       setTimeout(() => setSosStatus('idle'), 10000);
-    } catch (e) {
-      console.error("SOS failed", e);
-      setSosStatus('idle');
-    }
+    }, 2000);
   };
 
   const getTrajectoryIcon = () => {

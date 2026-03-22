@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mic, User, MapPin, CreditCard, Leaf, Calculator, ArrowRight, Loader2 } from 'lucide-react';
 import { useSpeech } from '../hooks/useSpeech';
 import { useLang } from '../contexts/LanguageContext';
 import { calculateDistressScore } from '../utils/scoring';
-import { fb } from '../utils/firebase';
-import { useAuth } from '../contexts/AuthContext';
 
 const TALUKS = ['Hassan', 'Alur', 'Sakleshpur', 'Arsikere', 'Belur', 'Channarayapatna', 'Holenarasipur', 'Arakalagudu'];
 
@@ -32,15 +30,11 @@ const VoiceInput = ({ label, field, value, onChange, onResult, lang, type="text"
 
 export default function FarmerOnboarding() {
   const { lang, t } = useLang();
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: location.state?.authName || '', 
-    email: location.state?.authEmail || '',
-    village: '', taluk: 'Hassan', aadhaar: '',
+    name: '', village: '', taluk: 'Hassan', aadhaar: '',
     crop: '', cropOutcome: 'Good', landSize: '',
     loanDaysOverdue: 0, marketActivity: 'Active',
     scoreOffset: 0
@@ -84,27 +78,27 @@ export default function FarmerOnboarding() {
 
   const submitForm = async () => {
     setLoading(true);
-    const score = calculateDistressScore(formData);
-    
     try {
-      if (currentUser?.uid) {
-        await fb.completeOnboarding(currentUser.uid, formData, score);
-      }
-      
-      const sessionData = {
-        farmer: { ...formData, id: currentUser?.uid || `f_${Date.now()}`, score },
-        score,
-        trajectory: 'Worsening',
-        status: score >= 65 ? 'Red' : 'Yellow'
-      };
-      
-      localStorage.setItem('krishimanas_farmer', JSON.stringify(sessionData));
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/farmers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      localStorage.setItem('krishimanas_farmer', JSON.stringify(data));
       navigate('/farmer/dashboard');
     } catch (e) {
-      console.error("Onboarding sync failed", e);
-      // Fallback
+      console.warn("Backend unavailable, using local fallback");
+      const score = calculateDistressScore(formData);
+      
+      const mockSchemes = [
+        { id: 'sc1', name: 'Raitha Siri', benefit: '₹10,000 / hectare', eligibilityReason: 'Crop failed and loan overdue', eligibilityReasonKannada: 'ಬೆಳೆ ವಿಫಲವಾಗಿದೆ ಮತ್ತು ಸಾಲ ಬಾಕಿ ಇದೆ', documents: ['Aadhaar', 'Bank Passbook'], deadline: '15 Days' },
+        { id: 'sc2', name: 'Parihara', benefit: 'Immediate relief fund', eligibilityReason: 'High distress score in Alur taluk', eligibilityReasonKannada: 'ಆಲೂರು ತಾಲೂಕಿನಲ್ಲಿ ಹೆಚ್ಚಿನ ಸಂಕಷ್ಟ ಅಂಕ', documents: ['RTC / Pahani', 'Aadhaar'], deadline: '7 Days' }
+      ];
+
       const fakeData = {
-        farmer: { ...formData, id: `f_${Date.now()}`, score }, score, trajectory: 'Worsening', status: score >= 65 ? 'Red' : 'Yellow'
+        farmer: { ...formData, id: 'f_local', score }, score, trajectory: 'Worsening', status: score >= 65 ? 'Red' : 'Yellow',
+        schemes: mockSchemes, mitra: { name: "Suresh Naik", assigned: ["Alur"] }
       };
       localStorage.setItem('krishimanas_farmer', JSON.stringify(fakeData));
       navigate('/farmer/dashboard');
