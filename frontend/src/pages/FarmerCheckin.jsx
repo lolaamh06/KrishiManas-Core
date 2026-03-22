@@ -4,6 +4,7 @@ import { Mic, CheckCircle, AlertCircle, ArrowLeft, Loader2, Volume2 } from 'luci
 import { useLang } from '../contexts/LanguageContext';
 import { useSpeech } from '../hooks/useSpeech';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { fb } from '../utils/firebase';
 
 const SENTIMENTS = [
   {
@@ -95,18 +96,14 @@ export default function FarmerCheckin() {
       timestamp: new Date().toISOString(),
     };
 
-    // Try to POST the check-in to the backend
+    // Update Firestore directly
     try {
-      await fetch(import.meta.env.VITE_API_URL + '/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(checkinData),
-      });
-    } catch {
-      console.warn('Backend unavailable — saving check-in locally');
+      await fb.updateFarmerScore(checkinData.farmerId, newScore, checks, sentiment);
+    } catch (e) {
+      console.error("Firebase update failed", e);
     }
 
-    // Deep-copy and update score + trajectory so Dashboard always picks up fresh values
+    // Deep-copy and update local cache for fast UI reload
     const updatedData = JSON.parse(JSON.stringify(previousData));
     updatedData.score = newScore;
     updatedData.trajectory = newTrajectory;
@@ -116,20 +113,8 @@ export default function FarmerCheckin() {
     }
     localStorage.setItem('krishimanas_farmer', JSON.stringify(updatedData));
     
-    // Broadcast specialized event for cross-portal sync
-    const syncEvent = {
-      type: 'SCORE_UPDATE',
-      farmerId: updatedData.farmer?.id || 'f_local',
-      farmerName: updatedData.farmer?.name || 'Farmer',
-      newScore: updatedData.score,
-      trajectory: updatedData.trajectory,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('krishimanas_last_event', JSON.stringify(syncEvent));
-    
-    // Fire storage events for both local and cross-tab listeners
+    // Fire local storage event just for FarmerDashboard to update immediately in same window
     window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new CustomEvent('krishimanas_update', { detail: syncEvent }));
 
     setLoading(false);
     setSubmitted(true);
