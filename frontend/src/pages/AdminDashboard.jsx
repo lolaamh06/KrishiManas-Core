@@ -8,12 +8,34 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, AreaChart, Area
+  BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import { sendSMS, SMS_TEMPLATES } from '../utils/mockTwilio';
 import { matchSchemes } from '../utils/matchSchemes';
+import toast, { Toaster } from 'react-hot-toast';
 
 /* ─── Seeded Intelligence Data ─── */
+const SEASON_COMPARISON = [
+  { taluk: 'Hassan', last: 31, this: 42 },
+  { taluk: 'Alur', last: 44, this: 71 },
+  { taluk: 'Sakleshpur', last: 29, this: 38 },
+  { taluk: 'Arsikere', last: 51, this: 68 },
+  { taluk: 'Belur', last: 22, this: 29 },
+  { taluk: 'Channarayapatna', last: 40, this: 55 },
+];
+
+const CORRELATION_DATA = [
+  { rainfall: 2,  score: 28, taluk: 'Belur' },
+  { rainfall: 4,  score: 31, taluk: 'Arsikere' },
+  { rainfall: 9,  score: 35, taluk: 'Holenarasipur' },
+  { rainfall: 12, score: 42, taluk: 'Hassan' },
+  { rainfall: 22, score: 48, taluk: 'Arakalagudu' },
+  { rainfall: 28, score: 52, taluk: 'Belur' },
+  { rainfall: 48, score: 71, taluk: 'Alur' },
+  { rainfall: 92, score: 82, taluk: 'Sakleshpur' },
+];
+
+
 const SEEDED_MITRAS = [
   { id: 'm1', name: 'Ravi Verma', taluk: 'Hassan', lat: 13.010, lng: 76.110, casesResolved: 12, avgResponse: '14m', activeCases: 2, status: 'Active' },
   { id: 'm2', name: 'Priya S.', taluk: 'Sakleshpur', lat: 12.950, lng: 75.800, casesResolved: 34, avgResponse: '8m', activeCases: 0, status: 'Available' },
@@ -146,6 +168,9 @@ export default function AdminDashboard() {
   const [alerting, setAlerting] = useState(false);
   const [alertLog, setAlertLog] = useState([]);
   const [liveMode, setLiveMode] = useState(false);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastTaluk, setBroadcastTaluk] = useState('Alur');
+  const [broadcastSent, setBroadcastSent] = useState(false);
 
   // Real-time synchronization for check-ins and SOS
   useEffect(() => {
@@ -218,8 +243,47 @@ export default function AdminDashboard() {
     setAlerting(false);
   };
 
+  const handleBroadcast = () => {
+    setBroadcastSent(true);
+    setTimeout(() => {
+      setBroadcastOpen(false);
+      setBroadcastSent(false);
+      setGlobalLogs(prev => [{
+        id: Date.now(),
+        type: 'BROADCAST',
+        msg: `📻 AIR Hassan broadcast scheduled for ${broadcastTaluk} taluk — 101.4 FM`,
+        time: 'Just now'
+      }, ...prev]);
+      toast.success(
+        `✅ Broadcast scheduled — ${broadcastTaluk} taluk — AIR Hassan 101.4 FM`,
+        { duration: 4000 }
+      );
+    }, 1500);
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-teal-500/30 overflow-x-hidden">
+      <Toaster position="top-center" />
+      <div className="w-full overflow-hidden bg-[#922B21] py-1.5 relative z-[1001]">
+        <div
+          className="whitespace-nowrap text-white text-[11px] font-black uppercase tracking-widest"
+          style={{
+            display: 'inline-block',
+            animation: 'ticker 35s linear infinite'
+          }}
+        >
+          🔴 LIVE — KrishiManthan 2026 — Hassan District, 
+          Karnataka — Farmer Distress Early Warning System — 
+          47 farmers lost every day in India — KrishiManas 
+          watches before it is too late 🌾 — 
+          Passive Detection. Contextual Intervention. 
+          Community Infrastructure. — 
+          Build. Innovate. Disrupt. — 
+          PS-05 Open Innovation — ME-RIISE Foundation @ 
+          MCE Hassan — AIR Hassan 101.4 FM Partner — 
+          🔴 LIVE — KrishiManthan 2026 — Hassan District —
+        </div>
+      </div>
       {/* Header */}
       <nav className="h-16 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-[1000]">
         <div className="flex items-center gap-6">
@@ -350,8 +414,12 @@ export default function AdminDashboard() {
             </div>
 
             {/* Sub Charts */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Trend Chart */}
+            <div className="space-y-6">
+              
+              {/* Row 1: Trend + Sector side by side */}
+              <div className="grid md:grid-cols-2 gap-6">
+                
+                {/* Trend Chart */}
               <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6 h-[320px] flex flex-col">
                 <div className="flex items-center gap-2 mb-6">
                   <LineIcon size={16} className="text-teal-500" />
@@ -403,6 +471,100 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Row 2: Season Comparison — full width */}
+            <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6">
+              
+              {/* Alur callout box */}
+              <div className="mb-4 px-4 py-3 bg-orange-500/10 border border-orange-500/30 rounded-xl flex items-center gap-3">
+                <span className="text-orange-400 text-lg">⚠️</span>
+                <div>
+                  <div className="text-orange-400 font-black text-sm">
+                    Alur taluk distress up 61% this season
+                  </div>
+                  <div className="text-orange-300 text-[11px] font-medium">
+                    ಅಲೂರು ತಾಲ್ಲೂಕು ತೊಂದರೆ ಕಳೆದ ಋತುವಿಗಿಂತ 61% ಹೆಚ್ಚಾಗಿದೆ
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 size={16} className="text-teal-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  This Season vs Last Season — Distress by Taluk
+                </span>
+              </div>
+
+              <div style={{ height: '260px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={SEASON_COMPARISON}
+                    margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                  >
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="#ffffff05" 
+                      vertical={false} 
+                    />
+                    <XAxis
+                      dataKey="taluk"
+                      stroke="#ffffff20"
+                      fontSize={10}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="#ffffff20"
+                      fontSize={10}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: '#020617',
+                        border: '1px solid #ffffff10',
+                        borderRadius: '12px',
+                        fontSize: '11px'
+                      }}
+                      itemStyle={{ fontWeight: 'bold' }}
+                    />
+                    <Bar 
+                      dataKey="last" 
+                      name="Last Season" 
+                      fill="#64748B" 
+                      radius={[4, 4, 0, 0]} 
+                      barSize={18}
+                    />
+                    <Bar 
+                      dataKey="this" 
+                      name="This Season" 
+                      fill="#0D7377" 
+                      radius={[4, 4, 0, 0]} 
+                      barSize={18}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-6 mt-3 justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#64748B]" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">
+                    Last Season
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#0D7377]" />
+                  <span className="text-[10px] font-bold text-teal-500 uppercase">
+                    This Season
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
           </div>
 
           {/* Right: Farmer Details & Actions */}
@@ -540,6 +702,13 @@ export default function AdminDashboard() {
               >
                 {alerting ? <><Loader2 className="animate-spin" size={16} /> Firing...</> : <><Bell size={16} /> Broadcast Alert</>}
               </button>
+              <button
+                onClick={() => setBroadcastOpen(true)}
+                className="w-full mt-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all bg-teal-500/10 text-teal-500 hover:bg-teal-500/20 shadow-xl shadow-teal-500/5 group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-teal-500/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <span className="relative z-10 flex items-center gap-2">📻 AIR Hassan Broadcast</span>
+              </button>
               {alertLog.length > 0 && (
                 <div className="mt-4 bg-black/40 rounded-xl p-3 border border-white/5 max-h-32 overflow-y-auto space-y-1">
                   {alertLog.map((log, i) => (
@@ -547,6 +716,95 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="bg-[#0f172a] border border-white/5 rounded-3xl p-6">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Activity size={16} className="text-teal-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    Signal Correlation Analysis
+                  </span>
+                </div>
+                <div className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full">
+                  <span className="text-teal-400 font-black text-sm">
+                    ρ = 0.73
+                  </span>
+                </div>
+              </div>
+
+              {/* Correlation stat */}
+              <div className="mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">
+                  Weather — Distress Correlation
+                </div>
+                <div className="text-2xl font-black text-teal-400">
+                  0.73
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium mt-1">
+                  Hassan District — Last 30 Days
+                </div>
+              </div>
+
+              {/* Scatter chart */}
+              <div style={{ height: '180px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
+                    <XAxis
+                      dataKey="rainfall"
+                      name="Rainfall"
+                      unit="mm"
+                      stroke="#ffffff20"
+                      fontSize={9}
+                      axisLine={false}
+                      tickLine={false}
+                      label={{
+                        value: 'Rainfall (mm)',
+                        position: 'insideBottom',
+                        offset: -2,
+                        fill: '#475569',
+                        fontSize: 9
+                      }}
+                    />
+                    <YAxis
+                      dataKey="score"
+                      name="Distress"
+                      stroke="#ffffff20"
+                      fontSize={9}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                    />
+                    <ZAxis range={[40, 40]} />
+                    <RechartsTooltip
+                      cursor={{ strokeDasharray: '3 3', stroke: '#ffffff20' }}
+                      contentStyle={{
+                        backgroundColor: '#020617',
+                        border: '1px solid #ffffff10',
+                        borderRadius: '8px',
+                        fontSize: '10px'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                    />
+                    <Scatter
+                      data={CORRELATION_DATA}
+                      fill="#0D7377"
+                      opacity={0.8}
+                    />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Insight */}
+              <div className="mt-3 p-3 bg-orange-500/5 border border-orange-500/20 rounded-xl">
+                <p className="text-[10px] text-orange-300 font-medium leading-relaxed italic">
+                  "Alur taluk — 48mm rain on March 14 — 
+                  distress spike detected within 72 hours"
+                </p>
+              </div>
             </div>
           </aside>
         </div>
@@ -644,6 +902,93 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+
+      {broadcastOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] flex items-center justify-center p-6">
+          <div className="bg-[#0f172a] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            
+            {/* Modal Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-xl">
+                📻
+              </div>
+              <div>
+                <div className="font-black text-white text-lg">
+                  AIR Hassan Broadcast
+                </div>
+                <div className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
+                  ಆಕಾಶವಾಣಿ ಹಾಸನ ಪ್ರಸಾರ — 101.4 FM
+                </div>
+              </div>
+            </div>
+
+            {/* Taluk Selector */}
+            <div className="mb-4">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                Select Taluk / ತಾಲ್ಲೂಕು ಆಯ್ಕೆ ಮಾಡಿ
+              </label>
+              <select
+                value={broadcastTaluk}
+                onChange={e => setBroadcastTaluk(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold text-sm focus:outline-none focus:border-teal-500/50"
+              >
+                {['Hassan','Alur','Sakleshpur','Arsikere',
+                  'Belur','Channarayapatna',
+                  'Holenarasipur','Arakalagudu'].map(t => (
+                  <option key={t} value={t} className="bg-[#0f172a]">
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Message Preview */}
+            <div className="mb-6">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                Broadcast Message Preview
+              </label>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <p className="text-slate-300 text-sm font-medium leading-relaxed mb-3">
+                  ಹಾಸನ್ ಜಿಲ್ಲೆಯ {broadcastTaluk} ತಾಲ್ಲೂಕಿನ ರೈತ 
+                  ಬಾಂಧವರೇ — PM ಫಸಲ್ ಬಿಮಾ ಯೋಜನೆಗೆ ಮಾರ್ಚ್ 31 
+                  ರೊಳಗೆ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ. ಹತ್ತಿರದ CSC ಕೇಂದ್ರಕ್ಕೆ 
+                  ಭೇಟಿ ನೀಡಿ. ನಿಮ್ಮ ಕೃಷಿ ಮಿತ್ರರನ್ನು ಸಂಪರ್ಕಿಸಿ.
+                </p>
+                <p className="text-slate-500 text-[11px] font-medium leading-relaxed">
+                  Farmers of {broadcastTaluk} taluk, Hassan district — 
+                  Apply for PMFBY crop insurance before March 31. 
+                  Visit your nearest CSC. Contact your Krishi Mitra.
+                </p>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setBroadcastOpen(false)}
+                className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBroadcast}
+                disabled={broadcastSent}
+                className="flex-1 py-3 rounded-xl bg-teal-500 text-[#020617] font-black text-xs uppercase tracking-widest hover:bg-teal-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {broadcastSent ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-[#020617]/30 border-t-[#020617] rounded-full animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  '📻 Confirm Broadcast'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

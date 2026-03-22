@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
+import NewsCarousel from '../components/shared/NewsCarousel';
 import {
   Users, ShieldAlert, Cpu, Heart, ChevronRight, Globe, Github,
   Layers, Map, Zap, PhoneCall, QrCode, ArrowUpRight, Activity
@@ -227,6 +228,43 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="py-20 px-6 max-w-7xl mx-auto relative z-10">
+        
+        {/* Section header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-green-500">
+                Live Updates
+              </span>
+            </div>
+            <h2 className="text-4xl font-black text-white tracking-tighter">
+              {lang === 'en' 
+                ? 'Karnataka Agriculture News' 
+                : 'ಕರ್ನಾಟಕ ಕೃಷಿ ಸುದ್ದಿ'
+              }
+            </h2>
+            <p className="text-slate-500 text-sm font-medium mt-2">
+              {lang === 'en'
+                ? 'Latest developments in Karnataka agriculture — March 2026'
+                : 'ಕರ್ನಾಟಕ ಕೃಷಿಯಲ್ಲಿ ಇತ್ತೀಚಿನ ಬೆಳವಣಿಗೆಗಳು — ಮಾರ್ಚ್ 2026'
+              }
+            </p>
+          </div>
+          <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+            {lang === 'en' 
+              ? '10 Stories This Month' 
+              : 'ಈ ತಿಂಗಳು 10 ಸುದ್ದಿಗಳು'
+            }
+          </div>
+        </div>
+
+        {/* Carousel */}
+        <NewsCarousel lang={lang} />
+
       </section>
 
       {/* Footer */}
