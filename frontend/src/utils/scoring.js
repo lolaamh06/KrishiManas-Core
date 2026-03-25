@@ -1,23 +1,48 @@
+/**
+ * Livelihood Vulnerability Index (LVI) Framework Algorithm
+ * Calculates an integrated agricultural distress score (0-100).
+ * Pillars: Financial Risk (45%), Production Shock (35%), Market Isolation (20%).
+ */
 export function calculateDistressScore(farmer) {
-  let score = 0;
+  // Normalize Inputs
+  const loanDays = Number(farmer.loanDaysOverdue) || 0;
+  const landAcres = Number(farmer.landSize) || 2.5; // Default to average if unknown
+  const cropOutcome = farmer.cropOutcome || 'Good';
+  const marketActivity = farmer.marketActivity || 'Active';
 
-  if (farmer.scoreOffset) score += farmer.scoreOffset;
+  // Pillar 1: Financial Risk (Scale 0-1) - Weight 0.45
+  let financialScore = 0.2; // Baseline 0-30 days
+  if (loanDays > 90) financialScore = 1.0;
+  else if (loanDays > 30) financialScore = 0.6;
 
-  if (farmer.selfCheckin === 'Bad') score += 30;
-  else if (farmer.selfCheckin === 'Okay') score += 15;
+  // Pillar 2: Production Shock (Scale 0-1) - Weight 0.35
+  let productionScore = 0;
+  if (cropOutcome === 'Failed') productionScore = 1.0;
+  else if (cropOutcome === 'Partial') productionScore = 0.5;
 
-  if (farmer.cropOutcome === 'Failed') score += 25;
-  else if (farmer.cropOutcome === 'Partial') score += 12;
+  // Apply Smallholder Vulnerability Penalty
+  if (landAcres < 2.0) {
+    productionScore = Math.min(1.0, productionScore * 1.25);
+  }
 
-  if (farmer.loanDaysOverdue > 45) score += 25;
-  else if (farmer.loanDaysOverdue > 0 && farmer.loanDaysOverdue <= 45) score += 15;
+  // Pillar 3: Market Isolation (Scale 0-1) - Weight 0.20
+  let marketScore = 0;
+  if (marketActivity === 'Inactive') marketScore = 1.0;
+  else if (marketActivity === 'Low') marketScore = 0.5;
 
-  if (farmer.marketActivity === 'Inactive') score += 20;
-  else if (farmer.marketActivity === 'Low') score += 10;
+  // Calculate Weighted Baseline Score
+  let rawScore = (financialScore * 0.45) + (productionScore * 0.35) + (marketScore * 0.20);
 
-  if (farmer.weatherShock) score += 10;
+  // Compound Risk Multiplier (Debt Trap Detection)
+  if (financialScore > 0.6 && productionScore > 0.5) {
+    rawScore = Math.min(1.0, rawScore * 1.2);
+  }
 
-  return Math.min(Math.max(score, 0), 100);
+  // Convert to 0-100 scale and apply legacy manual overrides if present
+  let finalScore = Math.round(rawScore * 100);
+  if (farmer.scoreOffset) finalScore += farmer.scoreOffset;
+
+  return Math.min(Math.max(finalScore, 0), 100);
 }
 
 export function getDistressStatus(score) {
