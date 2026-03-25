@@ -8,8 +8,8 @@ import FarmerCheckin from './pages/FarmerCheckin';
 import AdminDashboard from './pages/AdminDashboard';
 import MitraPortal from './pages/MitraPortal';
 import QRPage from './pages/QRPage';
-<<<<<<< HEAD
 import { ErrorBoundary } from './components/ErrorBoundary';
+import NewsDetail from './pages/NewsDetail';
 
 export default function App() {
   return (
@@ -24,27 +24,9 @@ export default function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/mitra" element={<MitraPortal />} />
           <Route path="/qr" element={<QRPage />} />
+          <Route path="/news/:slug" element={<NewsDetail />} />
         </Routes>
       </AuthProvider>
     </ErrorBoundary>
-=======
-import NewsDetail from './pages/NewsDetail';
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />
-        <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
-        <Route path="/farmer/checkin" element={<FarmerCheckin />} />
-        <Route path="/farmer" element={<FarmerOnboarding />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/mitra" element={<MitraPortal />} />
-        <Route path="/qr" element={<QRPage />} />
-        <Route path="/news/:slug" element={<NewsDetail />} />
-      </Routes>
-    </AuthProvider>
->>>>>>> origin/Pragyan
   );
 }

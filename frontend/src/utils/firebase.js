@@ -48,7 +48,15 @@ const mockOnSnapshot = (q, cb) => {
     docs: [],
     empty: true,
     forEach: (fn) => {},
-    metadata: { fromCache: true, hasPendingWrites: false }
+    metadata: { fromCache: true, hasPendingWrites: false },
+    exists: () => {
+      const u = localStorage.getItem('krishimanas_auth_farmer');
+      return !!u;
+    },
+    data: () => {
+      try { return JSON.parse(localStorage.getItem('krishimanas_auth_farmer')) || {}; } 
+      catch { return {}; }
+    }
   };
   const timer = setTimeout(() => cb(mockSnap), 0);
   return () => clearTimeout(timer); 

@@ -15,18 +15,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     try {
       const path = window.location.pathname;
-      let role = 'farmer';
+      let targetRole = 'farmer';
       if (path.startsWith('/admin')) {
-        role = 'admin';
+        targetRole = 'admin';
       } else if (path.startsWith('/mitra')) {
-        role = 'mitra';
+        targetRole = 'mitra';
       }
       
-      const storedUser = localStorage.getItem(`krishimanas_auth_${role}`);
+      const storedUser = localStorage.getItem(`krishimanas_auth_${targetRole}`);
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
         setCurrentUser(parsed);
-        setUserRole(role);
+        setUserRole(targetRole);
+      } else {
+        // Clear if we've switched role contexts but have a different role's user
+        setCurrentUser(null);
+        setUserRole(null);
       }
       setLoading(false);
     } catch (e) {
@@ -44,6 +48,7 @@ export function AuthProvider({ children }) {
       activeRole: role 
     };
     
+    // Isolation: Only set session for the role we are logging in as
     setCurrentUser(sessionData);
     setUserRole(role);
     localStorage.setItem(`krishimanas_auth_${role}`, JSON.stringify(sessionData));

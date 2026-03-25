@@ -25,7 +25,12 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    // Audit: Client-side registration validation
+    if (!isLogin && password.length < 6) {
+      setError('CRITICAL: Password must be at least 6 characters for hackathon compliance.');
+      setLoading(false);
+      return;
+    }
 
     try {
       let finalUser;
@@ -61,8 +66,15 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
         navigate('/mitra');
       }
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Authentication failed');
+      console.error("Auth Error:", err);
+      // Specific Firebase Error Mapping
+      if (err.code === 'auth/weak-password') {
+        setError('Security Alert: Password is too weak. Use 6+ characters.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('Registry Error: This email is already occupied.');
+      } else {
+        setError(err.message || 'Authentication failed. System rejection.');
+      }
     } finally {
       setLoading(false);
     }

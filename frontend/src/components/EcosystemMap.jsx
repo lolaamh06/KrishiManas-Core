@@ -19,9 +19,9 @@ export default function EcosystemMap({ farmers = [], mitras = [], selectedId, on
       <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
       
       {/* Farmers Layer */}
-      {farmers.map(f => (
+      {farmers.map((f, i) => (
         <CircleMarker 
-          key={f.id} 
+          key={f.id || `f-${i}`} 
           center={[f.lat || 13, f.lng || 76]} 
           radius={f.score >= 65 ? 14 : 9} 
           pathOptions={{ 
@@ -40,9 +40,9 @@ export default function EcosystemMap({ farmers = [], mitras = [], selectedId, on
       ))}
 
       {/* Mitras Layer */}
-      {mitras.map(m => (
+      {mitras.map((m, i) => (
         <CircleMarker 
-          key={m.id} 
+          key={m.id || `m-${i}`} 
           center={[m.lat || 13.05, m.lng || 76.15]} 
           radius={11} 
           pathOptions={{ 

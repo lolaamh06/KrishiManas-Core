@@ -19,13 +19,25 @@ export default function LandingPage() {
   const [authRole, setAuthRole] = useState('farmer');
 
   const handlePortalClick = (role, path) => {
-    navigate(path);
+    // Audit Fix: Explicit Session Check per Role
+    const storedSession = localStorage.getItem(`krishimanas_auth_${role}`);
+    
+    if (!storedSession) {
+      setAuthRole(role);
+      setIsAuthOpen(true);
+    } else {
+      navigate(path);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-teal-500/30 overflow-x-hidden">
 
-      {/* Auth Modal Injection Removed */}
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        defaultRole={authRole} 
+      />
 
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
