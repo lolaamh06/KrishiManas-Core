@@ -14,6 +14,7 @@ import {
 import { sendSMS, SMS_TEMPLATES } from '../utils/mockTwilio';
 import { matchSchemes } from '../utils/matchSchemes';
 import { useLang } from '../contexts/LanguageContext';
+import VoiceInput from '../components/shared/VoiceInput';
 import { db, collection, onSnapshot, query, orderBy, limit } from '../utils/firebase';
 
 import EcosystemMap from '../components/EcosystemMap';
@@ -196,16 +197,16 @@ export default function AdminDashboard() {
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 bg-[#020617]/50 backdrop-blur-xl shrink-0">
            <div className="flex gap-10">
               <div className="flex flex-col">
-                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Regional Priority</span>
-                 <span className="text-xl font-black text-red-500 tabular-nums">{stats.red} Critical Cases</span>
+                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{lang === 'en' ? 'Regional Priority' : 'ಪ್ರಾದೇಶಿಕ ಆದ್ಯತೆ'}</span>
+                 <span className="text-xl font-black text-red-500 tabular-nums">{stats.red} {lang === 'en' ? 'Critical Cases' : 'ಗಂಭೀರ ಪ್ರಕರಣಗಳು'}</span>
               </div>
               <div className="flex flex-col border-l border-white/10 pl-10">
-                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active Force</span>
-                 <span className="text-xl font-black text-blue-500 tabular-nums">{stats.activeMitras} Mitras</span>
+                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{lang === 'en' ? 'Active Force' : 'ಸಕ್ರಿಯ ಪಡೆ'}</span>
+                 <span className="text-xl font-black text-blue-500 tabular-nums">{stats.activeMitras} {lang === 'en' ? 'Mitras' : 'ಮಿತ್ರರು'}</span>
               </div>
               <div className="flex flex-col border-l border-white/10 pl-10">
-                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Avg Index</span>
-                 <span className="text-xl font-black text-teal-400 tabular-nums">{stats.avgDistress} Pt</span>
+                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{lang === 'en' ? 'Avg Index' : 'ಸರಾಸರಿ ಸೂಚ್ಯಂಕ'}</span>
+                 <span className="text-xl font-black text-teal-400 tabular-nums">{stats.avgDistress} {lang === 'en' ? 'Pt' : 'ಅಂಕ'}</span>
               </div>
            </div>
            
@@ -393,10 +394,13 @@ export default function AdminDashboard() {
                   <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                      <h2 className="text-2xl font-black text-white tracking-tighter">Tactical Farmer Registry</h2>
                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-xl border border-white/10">
-                           <Search size={14} className="text-slate-500" />
-                           <input type="text" placeholder="Search Entity ID / Name..." className="bg-transparent border-none focus:ring-0 text-xs font-bold text-white uppercase tracking-widest" />
-                        </div>
+                        <VoiceInput
+                          placeholder="Search Entity ID / Name..."
+                          icon={Search}
+                          value={searchTerm}
+                          onChange={setSearchTerm}
+                          className="w-64"
+                        />
                      </div>
                   </div>
                   <div className="overflow-x-auto">

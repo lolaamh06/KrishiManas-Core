@@ -10,11 +10,13 @@ import MitraPortal from './pages/MitraPortal';
 import QRPage from './pages/QRPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import NewsDetail from './pages/NewsDetail';
+import GlobalControls from './components/shared/GlobalControls';
 
 export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
+        <GlobalControls />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />

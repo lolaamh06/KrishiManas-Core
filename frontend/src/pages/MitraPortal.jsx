@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Volume2, Shield, Zap, LayoutDashboard, Briefcase, Activity, 
   MapPin, Clock, CheckCircle, FileText, Phone, MessageSquare, 
   Search, ChevronDown, ListTodo, History, TrendingUp, Filter, Users, Globe,
-  BarChart3, X, Bell, Info, Home, User, AlertTriangle
+  BarChart3, X, Bell, Info, Home, User, AlertTriangle, Mic
 } from 'lucide-react';
 import EcosystemMap from '../components/EcosystemMap';
 import { 
@@ -16,6 +16,7 @@ import { matchSchemes } from '../utils/matchSchemes';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db, fb, collection, onSnapshot, query, where, doc, updateDoc, arrayUnion, serverTimestamp, orderBy, limit } from '../utils/firebase';
+import VoiceInput from '../components/shared/VoiceInput';
 
 const SECTOR_DATA = [
   { name: 'Hassan', value: 45, color: '#ef4444' },
@@ -63,6 +64,7 @@ export default function MitraPortal() {
   const [sosSignal, setSosSignal] = useState(null);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
+  const dismissedAlertsRef = useRef(new Set());
 
   // Audit Fix: Re-injecting Firestore Listeners
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function MitraPortal() {
         const ts = lastSos.timestamp?.toMillis?.() || lastSos.timestamp || Date.now();
         const isRecent = (Date.now() - ts) < 300000; // 5 minute buffer
         
-        if (isRecent && !dismissedAlerts.has(lastSosDoc.id)) {
+        if (isRecent && !dismissedAlertsRef.current.has(lastSosDoc.id)) {
           setSosSignal({ ...lastSos, id: lastSosDoc.id });
         }
       } else {
@@ -287,7 +289,7 @@ export default function MitraPortal() {
                                <div>
                                   <h3 className="text-3xl font-black text-[#020617] tracking-tighter mb-1">{c.name}</h3>
                                   <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                     <MapPin size={12} className="text-teal-500" /> {c.taluk} Sector · <span className={c.score >= 65 ? 'text-red-500' : 'text-teal-600'}>{c.score >= 65 ? 'Critical Warning' : 'Observation Mode'}</span>
+                                     <MapPin size={12} className="text-teal-500" /> {c.taluk} {lang === 'en' ? 'Sector' : 'ವಲಯ'} · <span className={c.score >= 65 ? 'text-red-500' : 'text-teal-600'}>{c.score >= 65 ? (lang === 'en' ? 'Critical Warning' : 'ತೀವ್ರ ಎಚ್ಚರಿಕೆ') : (lang === 'en' ? 'Observation Mode' : 'ವೀಕ್ಷಣಾ ಹಂತ')}</span>
                                   </div>
                                </div>
                             </div>
@@ -298,7 +300,7 @@ export default function MitraPortal() {
                                        <div key={i} className={`w-3 h-3 rounded-full ${step.done ? 'bg-teal-500' : 'bg-slate-100'}`} />
                                      ))}
                                   </div>
-                                  <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Protocol Progress</span>
+                                  <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{lang === 'en' ? 'Protocol Progress' : 'ಪ್ರೋಟೋಕಾಲ್ ಪ್ರಗತಿ'}</span>
                                </div>
                                <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-slate-50 text-slate-300 group-hover:bg-teal-50 group-hover:text-teal-600 transition-all ${expanded === c.id ? 'rotate-180 bg-teal-500 text-white !group-hover:bg-teal-500' : ''}`}>
                                   <ChevronDown size={24} strokeWidth={3} />
@@ -316,11 +318,11 @@ export default function MitraPortal() {
                                        <div className="flex items-center gap-4">
                                           <div className="p-3 bg-teal-500 text-[#020617] rounded-2xl"><ListTodo size={20} /></div>
                                           <div>
-                                             <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Deployment Roadmap</div>
-                                             <div className="font-black text-[#020617] uppercase tracking-tighter">Standard Crisis Response Protocol</div>
+                                             <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{lang === 'en' ? 'Deployment Roadmap' : 'ಕಾರ್ಯಾಚರಣೆ ನಕ್ಷೆ'}</div>
+                                             <div className="font-black text-[#020617] uppercase tracking-tighter">{lang === 'en' ? 'Standard Crisis Response Protocol' : 'ಪ್ರಮಾಣಿತ ಬಿಕ್ಕಟ್ಟು ಪ್ರತಿಕ್ರಿಯೆ ಪ್ರೋಟೋಕಾಲ್'}</div>
                                           </div>
                                        </div>
-                                       <button onClick={() => setSelectedFarmer(c)} className="px-6 py-2.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">View Full Analytics</button>
+                                       <button onClick={() => setSelectedFarmer(c)} className="px-6 py-2.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">{lang === 'en' ? 'View Full Analytics' : 'ಸಂಪೂರ್ಣ ವಿವರಣೆ ವೀಕ್ಷಿಸಿ'}</button>
                                     </div>
                                     
                                     {c.assignedMitraId !== currentUser.uid ? (
@@ -354,13 +356,13 @@ export default function MitraPortal() {
                                                      </div>
                                                      {!step.done && step.requiresNote ? (
                                                         <div className="mt-4 space-y-2">
-                                                           <textarea 
-                                                             rows="2"
-                                                             placeholder="Mandatory field note required..."
-                                                             className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-teal-500/10 focus:outline-none"
-                                                             value={noteInput[`${c.id}_${step.id}`] || ''}
-                                                             onChange={(e) => setNoteInput({...noteInput, [`${c.id}_${step.id}`]: e.target.value})}
-                                                           />
+                                                           <VoiceInput
+                                                              type="textarea"
+                                                              placeholder="Mandatory field note required..."
+                                                              value={noteInput[`${c.id}_${step.id}`] || ''}
+                                                              onChange={(val) => setNoteInput({...noteInput, [`${c.id}_${step.id}`]: val})}
+                                                              className="w-full"
+                                                            />
                                                            <button 
                                                              onClick={() => handleUpdateChecklist(c.id, step.id, noteInput[`${c.id}_${step.id}`])}
                                                              className="w-full py-2.5 bg-teal-500 text-[#020617] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-teal-500/10 hover:bg-teal-400"
@@ -566,7 +568,10 @@ export default function MitraPortal() {
                     </button>
                     <button 
                       onClick={() => {
-                        setDismissedAlerts(prev => new Set(prev).add(sosSignal.id));
+                        const newSet = new Set(dismissedAlerts);
+                        newSet.add(sosSignal.id);
+                        setDismissedAlerts(newSet);
+                        dismissedAlertsRef.current = newSet;
                         setSosSignal(null);
                       }} 
                       className="p-3 bg-red-700/50 rounded-2xl hover:bg-red-700 transition-all"
@@ -593,16 +598,13 @@ export default function MitraPortal() {
                   />
                </div>
 
-               <div className="relative group">
-                  <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Filter active deployments (Name, Taluk, UID)..." 
-                    className="w-full pl-16 pr-8 py-5 bg-white border border-slate-200 rounded-[2rem] text-sm font-bold shadow-sm focus:ring-4 focus:ring-teal-500/5 focus:border-teal-500/40 transition-all outline-none"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-               </div>
+               <VoiceInput
+                  placeholder="Filter active deployments (Name, Taluk, UID)..."
+                  icon={Search}
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  className="mb-8"
+                />
 
                {activePriorityCases.length === 0 && upcomingRiskCases.length === 0 ? (
                  <div className="h-64 flex flex-col items-center justify-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, User, MapPin, CreditCard, Leaf, Calculator, ArrowRight, Loader2, Home, ShieldCheck, CheckCircle } from 'lucide-react';
 import { useSpeech } from '../hooks/useSpeech';
+import VoiceInput from '../components/shared/VoiceInput';
 import { useLang } from '../contexts/LanguageContext';
 import { calculateDistressScore } from '../utils/scoring';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,26 +10,7 @@ import { db, fb, doc, updateDoc, serverTimestamp } from '../utils/firebase';
 
 const TALUKS = ['Hassan', 'Alur', 'Sakleshpur', 'Arsikere', 'Belur', 'Channarayapatna', 'Holenarasipur', 'Arakalagudu'];
 
-const VoiceInput = ({ label, field, value, onChange, onResult, lang, type="text" }) => {
-  const { isListening, startListening } = useSpeech(onResult);
-  return (
-    <div className="mb-6">
-      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-l-2 border-teal-500 pl-2 ml-1">{label}</label>
-      <div className="relative flex items-center group">
-        <input 
-          id={field} type={type} value={value} onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-[#0f172a] border border-white/5 rounded-2xl p-4 pr-14 text-white font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/40 transition-all outline-none"
-        />
-        <button 
-          type="button" onClick={() => startListening(lang)}
-          className={`absolute right-3 p-2.5 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-slate-500 hover:text-teal-500 hover:bg-white/10'}`}
-        >
-          <Mic size={20} />
-        </button>
-      </div>
-    </div>
-  );
-};
+// Global VoiceInput component now used from shared components
 
 export default function FarmerOnboarding() {
   const { lang, t } = useLang();
@@ -161,8 +143,14 @@ export default function FarmerOnboarding() {
                   </select>
                 </div>
                 
-                <VoiceInput label="Village Unit" field="village" value={formData.village} onChange={v => setFormData({...formData, village: v})} onResult={res => handleVoiceInput('village', res)} lang={lang === 'kn' ? 'kn-IN' : 'en-IN'} />
-                <VoiceInput label="Aadhaar ID Index" field="aadhaar" type="tel" value={formData.aadhaar} onChange={v => setFormData({...formData, aadhaar: v})} onResult={res => handleVoiceInput('aadhaar', res)} lang={lang === 'kn' ? 'kn-IN' : 'en-IN'} />
+                <VoiceInput 
+                  label={t('phone')} type="number" value={formData.phone} 
+                  onChange={(val) => setFormData({...formData, phone: val})}
+                />
+                <VoiceInput 
+                  label="Village Unit" value={formData.village} 
+                  onChange={(val) => setFormData({...formData, village: val})}
+                />
                 
                 <button 
                   onClick={() => setStep(2)}
@@ -179,8 +167,18 @@ export default function FarmerOnboarding() {
                    <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl"><Leaf size={20} /></div>
                    Agrarian Metrics
                 </h2>
-                <VoiceInput label="Primary Crop Segment" field="crop" value={formData.crop} onChange={v => setFormData({...formData, crop: v})} onResult={res => handleVoiceInput('crop', res)} lang={lang === 'kn' ? 'kn-IN' : 'en-IN'} />
-                <VoiceInput label="Land Magnitude (Acres)" field="landSize" type="number" value={formData.landSize} onChange={v => setFormData({...formData, landSize: v})} onResult={res => handleVoiceInput('landSize', res)} lang={lang === 'kn' ? 'kn-IN' : 'en-IN'} />
+                <VoiceInput 
+                  label={t('aadhaar')} type="number" value={formData.aadhaar} 
+                  onChange={(val) => setFormData({...formData, aadhaar: val})}
+                />
+                <VoiceInput 
+                  label="Primary Crop Segment" value={formData.crop} 
+                  onChange={(val) => setFormData({...formData, crop: val})}
+                />
+                <VoiceInput 
+                  label={t('landsize')} type="number" value={formData.landSize} 
+                  onChange={(val) => setFormData({...formData, landSize: val})}
+                />
                 
                 <div className="mb-10">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-l-2 border-emerald-500 pl-2 ml-1">Last Harvest Outcome</label>

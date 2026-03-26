@@ -6,6 +6,7 @@ import { useSpeech } from '../hooks/useSpeech';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useAuth } from '../contexts/AuthContext';
 import { db, fb, doc, updateDoc, serverTimestamp, arrayUnion } from '../utils/firebase';
+import VoiceInput from '../components/shared/VoiceInput';
 
 const SENTIMENTS = [
   {
@@ -57,9 +58,7 @@ export default function FarmerCheckin() {
   const [loading, setLoading] = useState(false);
   const [scoreChange, setScoreChange] = useState(0);
 
-  const { isListening, startListening } = useSpeech((text) => {
-    setNotes(prev => prev ? prev + ' ' + text : text);
-  });
+  // Global VoiceInput now handles internal speech logic
 
   const previousScore = currentUser?.score || 50;
   const farmerName = currentUser?.name || 'Farmer';
@@ -240,28 +239,14 @@ export default function FarmerCheckin() {
              </div>
            </div>
 
-           {/* Audio Input Segment */}
-           <div className="space-y-4 pt-6 border-t border-white/5">
-             <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Qualitative Narrative (Optional)</div>
-             <div className="relative group">
-               <textarea
-                 value={notes}
-                 onChange={e => setNotes(e.target.value)}
-                 rows={4}
-                 placeholder={lang === 'kn' ? 'ಇಲ್ಲಿ ಬರೆಯಿರಿ...' : 'Audio transcription or manual input...'}
-                 className="w-full bg-white/5 border border-white/5 rounded-[2rem] p-6 pr-14 text-white font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/40 transition-all outline-none resize-none"
-               />
-               <button
-                 type="button"
-                 onClick={() => startListening(lang === 'kn' ? 'kn-IN' : 'en-IN')}
-                 className={`absolute bottom-6 right-6 p-3 rounded-2xl transition-all ${
-                   isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white/10 text-slate-500 hover:text-teal-500 hover:bg-white/20'
-                 }`}
-               >
-                 <Mic size={22} />
-               </button>
-             </div>
-           </div>
+            <VoiceInput
+              label={lang === 'kn' ? "ಗುಣಾತ್ಮಕ ವಿವರಣೆ (ಐಚ್ಛಿಕ)" : "Qualitative Narrative (Optional)"}
+              type="textarea"
+              value={notes}
+              onChange={setNotes}
+              placeholder={lang === 'kn' ? 'ಇಲ್ಲಿ ಬರೆಯಿರಿ ಅಥವಾ ಧ್ವನಿ ಬಳಸಿ...' : 'Audio transcription or manual input...'}
+              className="w-full"
+            />
 
            {/* Live Forecast */}
            {sentiment && (

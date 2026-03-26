@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '../contexts/LanguageContext';
-import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useAuth } from '../contexts/AuthContext';
 import { db, fb, doc, onSnapshot, updateDoc, serverTimestamp, collection, addDoc, query, where, orderBy, limit, getDocs } from '../utils/firebase';
 import { 
@@ -217,7 +216,6 @@ export default function FarmerDashboard() {
   const { lang, t } = useLang();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { speak } = useTextToSpeech();
   
   const [farmerData, setFarmerData] = useState(null);
   const [uploadStatus, setUploadStatus] = useState({});
@@ -307,12 +305,6 @@ export default function FarmerDashboard() {
     loanDaysOverdue: farmerData.loanDaysOverdue, landSize: farmerData.landSize,
   });
 
-  const speakSummary = () => {
-    const text = lang === 'en'
-      ? `Hello ${farmerData.name}. Your distress score is ${score}, in the ${status} zone. You have ${schemes.length} schemes available.`
-      : `ನಮಸ್ಕಾರ ${farmerData.name}. ನಿಮ್ಮ ಸಂಕಷ್ಟದ ಅಂಕ ${score}. ನಿಮಗಾಗಿ ${schemes.length} ಯೋಜನೆಗಳ ವಿವರ ಇಲ್ಲಿದೆ.`;
-    speak(text, lang === 'en' ? 'en-IN' : 'kn-IN');
-  };
 
   // Algorithm Live weights calculation for the explainer modal
   const fWeight = Number(farmerData?.loanDaysOverdue) > 90 ? 1.0 : Number(farmerData?.loanDaysOverdue) > 30 ? 0.6 : 0.2;
@@ -458,14 +450,14 @@ export default function FarmerDashboard() {
       {/* ─── Navigation ─── */}
       <nav className="h-16 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-[1000]">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-teal-500 font-black text-2xl tracking-tighter hover:opacity-80 transition-all">
-          <Zap size={22} fill="currentColor" /> KrishiManas
+          <Zap size={22} fill="currentColor" /> {lang === 'en' ? 'KrishiManas' : 'ಕೃಷಿಮನಸ್'}
         </button>
         <div className="flex items-center gap-6">
            <div className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest border border-white/10 px-3 py-1 rounded-lg">
-              District Nodes : Hassan // Operational
+              {lang === 'en' ? 'District Nodes : Hassan // Operational' : 'ಜಿಲ್ಲಾ ಘಟಕಗಳು : ಹಾಸನ // ಕಾರ್ಯನಿರತ'}
            </div>
            <button onClick={() => { localStorage.removeItem('krishimanas_auth_farmer'); navigate('/'); }} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">
-              Session End
+              {lang === 'en' ? 'Session End' : 'ಲಾಗ್ ಔಟ್'}
            </button>
         </div>
       </nav>
@@ -480,22 +472,15 @@ export default function FarmerDashboard() {
            <div className="relative z-10 space-y-2">
               <div className="flex items-center gap-2 text-teal-500 font-black text-[10px] uppercase tracking-[0.3em]">
                  <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_#14b8a6]" />
-                 Secure Identity Verified
+                 {lang === 'en' ? 'Secure Identity Verified' : 'ಸುರಕ್ಷಿತ ಗುರುತು ಪರಿಶೀಲಿಸಲಾಗಿದೆ'}
               </div>
               <h1 className="text-5xl font-black text-white tracking-tighter leading-none">
                  {lang === 'kn' ? `${farmerData.name} ಅವರೇ, ನಮಸ್ಕಾರ` : `Namaste, ${farmerData.name}`}
               </h1>
               <p className="text-slate-500 font-bold uppercase text-[11px] tracking-[0.2em] italic">
-                 {farmerData.taluk} Operational Sector // Registry ID: {currentUser.uid.substring(0,8)}
+                 {farmerData.taluk} {lang === 'en' ? 'Operational Sector // Registry ID:' : 'ಕಾರ್ಯಾಚರಣೆ ವಲಯ // ನೋಂದಣಿ ಐಡಿ:'} {currentUser.uid.substring(0,8)}
               </p>
            </div>
-           <button
-             onClick={speakSummary}
-             className="group relative z-10 flex items-center justify-center gap-4 bg-teal-500 text-[#020617] px-10 py-5 rounded-3xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-teal-500/20"
-           >
-              <Volume2 size={24} className="group-hover:animate-bounce" />
-              {lang === 'kn' ? 'ಸ್ಥಿತಿ ವರದಿ ಆಲಿಸಿ' : 'Audit Synthesis'}
-           </button>
         </div>
 
         {/* ─── Distress Matrix ─── */}
@@ -504,7 +489,9 @@ export default function FarmerDashboard() {
               <div className="bg-[#0f172a] rounded-[3rem] p-12 border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl shadow-black/40">
                  <div className="absolute -right-12 -top-12 text-teal-500 opacity-[0.02] rotate-45 scale-150"><Shield size={400} /></div>
                  
-                 <div className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-12">Distress Performance Index (DPI)</div>
+                 <div className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-12">
+                   {lang === 'en' ? 'Distress Performance Index (DPI)' : 'ಸಂಕಷ್ಟ ಕಾರ್ಯಕ್ಷಮತೆ ಸೂಚ್ಯಂಕ (DPI)'}
+                 </div>
 
                  <ArcGauge score={score} status={status} />
                  <InterventionBanner score={score} />
@@ -515,10 +502,10 @@ export default function FarmerDashboard() {
                        score >= 35 ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-yellow-500/10' : 
                        'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-emerald-500/10'
                     }`}>
-                       Protocol Mode: {status} Level // {trajectory} Trajectory
+                       {lang === 'en' ? `Protocol Mode: ${status} Level // ${trajectory} Trajectory` : `ಪ್ರೋಟೋಕಾಲ್: ${status} ಹಂತ // ${trajectory} ದಿಕ್ಕು`}
                     </div>
                     <p className="max-w-md text-xs font-bold text-slate-400 opacity-60 uppercase italic tracking-tighter">
-                       Index refreshed {lastCheckin?.seconds ? new Date(lastCheckin.seconds * 1000).toLocaleTimeString() : 'Just Now'} across all regional nodes.
+                       {lang === 'en' ? 'Index refreshed' : 'ಸೂಚ್ಯಂಕ ನವೀಕರಿಸಲಾಗಿದೆ'} {lastCheckin?.seconds ? new Date(lastCheckin.seconds * 1000).toLocaleTimeString() : 'Just Now'} {lang === 'en' ? 'across all regional nodes.' : 'ಎಲ್ಲಾ ಪ್ರಾದೇಶಿಕ ನೋಡ್‌ಗಳಲ್ಲಿ.'}
                     </p>
                  </div>
               </div>
@@ -535,15 +522,15 @@ export default function FarmerDashboard() {
                  <div className="relative z-10 flex items-center justify-between">
                     <div>
                        <div className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 ${canCheckIn ? 'text-[#020617]' : 'text-teal-500'}`}>
-                          {canCheckIn ? 'Action Required' : 'Assessment Nominal'}
+                          {canCheckIn ? (lang === 'en' ? 'Action Required' : 'ಕ್ರಮದ ಅಗತ್ಯವಿದೆ') : (lang === 'en' ? 'Assessment Nominal' : 'ಪರಿಶೀಲನೆ ಸಾಮಾನ್ಯ')}
                        </div>
                        <h3 className={`text-3xl font-black tracking-tighter ${canCheckIn ? 'text-[#020617]' : 'text-white'}`}>
                           {lang === 'kn' ? 'ಸಂಕಷ್ಟದ ಪರಿಶೀಲನೆ-೨' : 'Dynamic DPI Audit'}
                        </h3>
                        <p className={`text-sm font-bold max-w-sm mt-2 ${canCheckIn ? 'text-[#020617]/70 italic' : 'text-slate-500'}`}>
                           {canCheckIn 
-                            ? 'Your evaluation window is open. Recalibrate your distress index for priority scheme access.' 
-                            : 'Score locked. Regional HQ is processing your current risk profile.'}
+                            ? (lang === 'en' ? 'Your evaluation window is open. Recalibrate your distress index for priority scheme access.' : 'ನಿಮ್ಮ ಮೌಲ್ಯಮಾಪನ ವಿಂಡೋ ತೆರೆದಿದೆ. ಯೋಜನೆಗಳಿಗಾಗಿ ನಿಮ್ಮ ಸಂಕಷ್ಟ ಸೂಚ್ಯಂಕವನ್ನು ಮರು-ಮಾಪನ ಮಾಡಿ.') 
+                            : (lang === 'en' ? 'Score locked. Regional HQ is processing your current risk profile.' : 'ಸ್ಕೋರ್ ಲಾಕ್ ಆಗಿದೆ. ಪ್ರಾದೇಶಿಕ ಕೇಂದ್ರವು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಅಪಾಯದ ಪ್ರೊಫೈಲ್ ಅನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸುತ್ತಿದೆ.')}
                        </p>
                     </div>
                     <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-inner transition-all duration-500 group-hover:scale-110 ${canCheckIn ? 'bg-[#020617] text-teal-400' : 'bg-white/5 text-slate-600'}`}>
@@ -603,15 +590,17 @@ export default function FarmerDashboard() {
               {/* Force Deployment (SOS) */}
               <div className="bg-[#0f172a] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl relative overflow-hidden group">
                  <div className="absolute right-0 top-0 p-10 text-red-500 opacity-5 group-hover:rotate-12 transition-all scale-110"><Shield size={160} /></div>
-                 <div className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] mb-8">Mitra Unit Assigned</div>
+                  <div className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] mb-8">
+                    {lang === 'en' ? 'Mitra Unit Assigned' : 'ನಿಯೋಜಿತ ಮಿತ್ರ ಘಟಕ'}
+                  </div>
                  
                  <div className="flex items-center gap-6 mb-10">
                     <div className="w-20 h-20 rounded-[1.5rem] bg-teal-500 text-[#020617] flex items-center justify-center text-3xl font-black shadow-2xl shadow-teal-500/20">
                        {farmerData.assignedMitraName?.substring(0,1) || 'M'}
                     </div>
                     <div className="flex-1">
-                       <div className="font-black text-2xl text-white tracking-tighter">{farmerData.assignedMitraName || 'Global Mitra Unit'}</div>
-                       <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Force · {farmerData.taluk || 'HQ'}</div>
+                       <div className="font-black text-2xl text-white tracking-tighter">{farmerData.assignedMitraName || (lang === 'en' ? 'Global Mitra Unit' : 'ಮಿತ್ರ ಘಟಕ')}</div>
+                       <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{lang === 'en' ? 'Active Force' : 'ಸಕ್ರಿಯ ಪಡೆ'} · {farmerData.taluk || 'HQ'}</div>
                        
                        {farmerData.assignedMitraPhone && (
                          <div className="mt-2 flex items-center gap-2 text-teal-400 font-bold text-sm">
@@ -620,7 +609,7 @@ export default function FarmerDashboard() {
                        )}
 
                        <div className={`mt-2 flex items-center gap-2 font-black text-[9px] uppercase ${farmerData.assignedMitraId ? 'text-emerald-500' : 'text-slate-500'}`}>
-                          <div className={`w-2 h-2 rounded-full ${farmerData.assignedMitraId ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`} /> {farmerData.assignedMitraId ? 'Unit Deployment Active' : 'Awaiting Assignment'}
+                          <div className={`w-2 h-2 rounded-full ${farmerData.assignedMitraId ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`} /> {farmerData.assignedMitraId ? (lang === 'en' ? 'Unit Deployment Active' : 'ಘಟಕ ಸಕ್ರಿಯವಾಗಿದೆ') : (lang === 'en' ? 'Awaiting Assignment' : 'ನಿಯೋಜನೆಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ')}
                        </div>
                     </div>
                  </div>
@@ -674,7 +663,7 @@ export default function FarmerDashboard() {
                  </p>
               </div>
               <div className="text-[10px] font-black bg-white/5 text-slate-500 px-6 py-3 rounded-2xl border border-white/10 uppercase tracking-[.25em]">
-                 Found {schemes.length} Tactical Matches
+                 {lang === 'en' ? `Found ${schemes.length} Tactical Matches` : `${schemes.length} ತಂತ್ರಗಳು ಪತ್ತೆಯಾಗಿವೆ`}
               </div>
            </div>
            

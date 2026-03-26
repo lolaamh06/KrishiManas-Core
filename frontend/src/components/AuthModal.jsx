@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
-import { X, Mail, Lock, User, MapPin } from 'lucide-react';
+import { X, Mail, Lock, User, MapPin, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import VoiceInput from './shared/VoiceInput';
 
 export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
   const { lang } = useLang();
@@ -86,7 +87,13 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
         {/* Header */}
         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
           <h2 className="text-2xl font-black text-white">
-            {isLogin ? 'Welcome Back' : `Join as ${defaultRole === 'mitra' ? 'Volunteer' : defaultRole === 'admin' ? 'System Admin' : 'Farmer'}`}
+            {isLogin 
+              ? (lang === 'en' ? 'Welcome Back' : 'ಮರಳಿ ಸ್ವಾಗತ') 
+              : (lang === 'en' 
+                  ? `Join as ${defaultRole === 'mitra' ? 'Volunteer' : defaultRole === 'admin' ? 'System Admin' : 'Farmer'}` 
+                  : `${defaultRole === 'mitra' ? 'ಸ್ವಯಂಸೇವಕರಾಗಿ' : defaultRole === 'admin' ? 'ನಿರ್ವಾಹಕರಾಗಿ' : 'ರೈತರಾಗಿ'} ಸೇರಿ`
+                )
+            }
           </h2>
           <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
             <X size={20} />
@@ -103,41 +110,30 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input 
-                      required
-                      type="text" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
-                      placeholder="Enter your name"
-                    />
-                  </div>
-                </div>
-              </>
+              <VoiceInput
+                label={lang === 'en' ? "Full Name" : "ಪೂರ್ಣ ಹೆಸರು"}
+                icon={User}
+                value={name}
+                onChange={setName}
+                placeholder={lang === 'en' ? "Enter your name" : "ನಿಮ್ಮ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"}
+                required
+              />
             )}
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                <input 
-                  required
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
-                  placeholder="name@example.com"
-                />
-              </div>
-            </div>
+            <VoiceInput
+              label={lang === 'en' ? "Email Address" : "ಇಮೇಲ್ ವಿಳಾಸ"}
+              icon={Mail}
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="name@example.com"
+              required
+            />
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Password</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">
+                {lang === 'en' ? 'Password' : 'ಪಾಸ್ವರ್ಡ್'}
+              </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                 <input 
@@ -156,7 +152,12 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
               disabled={loading}
               className="w-full py-4 mt-4 bg-teal-500 hover:bg-teal-400 text-black font-black text-lg rounded-xl transition-all disabled:opacity-50 flex justify-center items-center"
             >
-              {loading ? <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" /> : (isLogin ? 'Secure Login' : 'Create Account')}
+              {loading ? <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" /> : 
+                (isLogin 
+                  ? (lang === 'en' ? 'Secure Login' : 'ಸುರಕ್ಷಿತ ಲಾಗಿನ್') 
+                  : (lang === 'en' ? 'Create Account' : 'ಖಾತೆ ತೆರೆಯಿರಿ')
+                )
+              }
             </button>
           </form>
 
@@ -167,7 +168,10 @@ export default function AuthModal({ isOpen, onClose, defaultRole = 'mitra' }) {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
             >
-              {isLogin ? "Need an account? Sign up" : "Already have an account? Log in"}
+              {isLogin 
+                ? (lang === 'en' ? "Need an account? Sign up" : "ಖಾತೆ ಇಲ್ಲವೇ? ನೋಂದಾಯಿಸಿ") 
+                : (lang === 'en' ? "Already have an account? Log in" : "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ? ಲಾಗಿನ್ ಮಾಡಿ")
+              }
             </button>
           </div>
 
