@@ -8,7 +8,6 @@ import {
   TrendingUp, TrendingDown, Minus, Home, FileText, PhoneCall, Loader2, X, Activity, Zap, Bell,
   Clock, Menu, Phone, ArrowRight, Calculator, Binary, RefreshCcw
 } from 'lucide-react';
-import { getMockWeather } from '../utils/mockWeather';
 import { matchSchemes } from '../utils/matchSchemes'; 
 
 const INTERVENTION_ITEMS = [
