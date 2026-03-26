@@ -6,7 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { db, fb, doc, onSnapshot, updateDoc, serverTimestamp, collection, addDoc, query, where, orderBy, limit } from '../utils/firebase';
 import { 
   Volume2, AlertTriangle, CheckCircle, CloudRain, MapPin, Upload, User, 
-  TrendingUp, TrendingDown, Minus, Home, FileText, PhoneCall, Loader2, X, Activity, Zap, Bell
+  TrendingUp, TrendingDown, Minus, Home, FileText, PhoneCall, Loader2, X, Activity, Zap, Bell,
+  Clock, Menu, Phone, ArrowRight, Calculator, Binary
 } from 'lucide-react';
 import { getMockWeather } from '../utils/mockWeather';
 import { matchSchemes } from '../utils/matchSchemes'; 
@@ -223,6 +224,7 @@ export default function FarmerDashboard() {
   const [sosStatus, setSosStatus] = useState('idle'); // idle | connecting | notified
   const [weather, setWeather] = useState(null);
   const [mitraAlert, setMitraAlert] = useState(null);
+  const [isAlgoOpen, setIsAlgoOpen] = useState(false);
   const fileInputRefs = useRef({});
 
   // Audit Fix: Real-time Firestore Listener for Farmer Profile
@@ -261,7 +263,10 @@ export default function FarmerDashboard() {
           setMitraAlert({ ...lastAlert, id: snap.docs[0].id });
         }
       }
-    }, (err) => console.log("Silent Error: Global Alerts Index Required", err));
+    }, (err) => {
+      console.error("CRITICAL: Global Alerts Index Required.", err);
+      console.warn("If you see a Firebase Index Error above, please click the generated link in the console to create it.");
+    });
 
     return () => {
       unsub();
@@ -278,10 +283,10 @@ export default function FarmerDashboard() {
     </div>
   );
 
-  const score = farmerData.score ?? 50;
+  const score = farmerData?.score ?? 0;
   const status = score >= 65 ? 'Red' : score >= 35 ? 'Yellow' : 'Green';
-  const trajectory = farmerData.trajectory || 'Stable';
-  const lastCheckin = farmerData.lastUpdated; // Firestore timestamp
+  const trajectory = farmerData?.trajectory || 'Stable';
+  const lastCheckin = farmerData?.lastUpdated; // Firestore timestamp
 
   const COOLDOWN_PERIOD = 14 * 24 * 60 * 60 * 1000;
   const lastCheckinMs = lastCheckin?.seconds ? lastCheckin.seconds * 1000 : (lastCheckin?.toMillis?.() || Date.now());
@@ -298,6 +303,13 @@ export default function FarmerDashboard() {
       : `ನಮಸ್ಕಾರ ${farmerData.name}. ನಿಮ್ಮ ಸಂಕಷ್ಟದ ಅಂಕ ${score}. ನಿಮಗಾಗಿ ${schemes.length} ಯೋಜನೆಗಳ ವಿವರ ಇಲ್ಲಿದೆ.`;
     speak(text, lang === 'en' ? 'en-IN' : 'kn-IN');
   };
+
+  // Algorithm Live weights calculation for the explainer modal
+  const fWeight = Number(farmerData?.loanDaysOverdue) > 90 ? 1.0 : Number(farmerData?.loanDaysOverdue) > 30 ? 0.6 : 0.2;
+  const pBase = farmerData?.cropOutcome === 'Failed' ? 1.0 : farmerData?.cropOutcome === 'Partial' ? 0.5 : 0.0;
+  const pWeight = Number(farmerData?.landSize) < 2.0 ? Math.min(1.0, pBase * 1.25) : pBase;
+  const mWeight = farmerData?.marketActivity === 'Inactive' ? 1.0 : farmerData?.marketActivity === 'Low' ? 0.5 : 0.0;
+  const hasDebtTrap = fWeight > 0.6 && pWeight > 0.5;
 
   const handleSOS = async () => {
     setSosStatus('connecting');
@@ -492,6 +504,24 @@ export default function FarmerDashboard() {
            {/* ─── Strategic Sidebar ─── */}
            <div className="lg:col-span-4 space-y-8">
               
+              {/* Algorithm Explainer Trigger Card */}
+              <div 
+                onClick={() => setIsAlgoOpen(true)}
+                className="bg-[#0f172a] hover:bg-white/5 rounded-[2.5rem] p-8 border border-white/5 relative group overflow-hidden shadow-xl cursor-pointer transition-all active:scale-95"
+              >
+                <div className="absolute -right-4 -top-4 text-teal-500 opacity-[0.05] group-hover:rotate-12 transition-all"><Binary size={100} /></div>
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="text-[10px] font-black uppercase text-teal-500 tracking-[0.3em] mb-2">Internal Protocol</div>
+                    <h3 className="text-xl font-black text-white tracking-tighter">Algorithm Analytics</h3>
+                    <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider italic">View Calculation Matrix</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-slate-400 group-hover:text-teal-400 group-hover:border-teal-500/50 transition-all bg-[#020617]">
+                    <Calculator size={18} />
+                  </div>
+                </div>
+              </div>
+
               {/* Regional Telemetry (Weather) */}
               <div className="bg-[#0f172a] rounded-[2.5rem] p-8 border border-white/5 relative group overflow-hidden shadow-xl">
                  <div className="absolute -right-4 -top-4 text-teal-500 opacity-5 group-hover:rotate-12 transition-all"><CloudRain size={120} /></div>
@@ -632,6 +662,100 @@ export default function FarmerDashboard() {
            </div>
         </div>
       </div>
+      
+      {/* ─── Algorithm Explainer Overlay ─── */}
+      {isAlgoOpen && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-6 sm:p-12 animate-in fade-in zoom-in duration-300">
+           <div 
+             onClick={() => setIsAlgoOpen(false)} 
+             className="absolute inset-0 bg-[#020617]/90 backdrop-blur-2xl" 
+           />
+           
+           <div className="relative w-full max-w-xl bg-[#0f172a] border border-white/5 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden">
+              <div className="bg-teal-500/10 border-b border-white/5 px-10 py-8 flex items-center justify-between">
+                 <div>
+                    <div className="text-[10px] font-black uppercase text-teal-500 tracking-[0.4em] mb-1">Mathematical Protocol</div>
+                    <h2 className="text-3xl font-black text-white tracking-tighter italic uppercase">Algorithm Matrix</h2>
+                 </div>
+                 <button 
+                   onClick={() => setIsAlgoOpen(false)}
+                   className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                 >
+                    <X size={24} />
+                 </button>
+              </div>
+
+              <div className="p-10 space-y-10">
+                 {/* The Master Formula */}
+                 <div className="text-center space-y-4">
+                    <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Weighted Composite Index (WCI)</div>
+                    <div className="bg-white/5 rounded-[2rem] p-8 border border-white/5 font-mono text-xl md:text-2xl text-teal-400 shadow-inner">
+                       Score = (0.45 × F) + (0.35 × P) + (0.20 × M)
+                    </div>
+                 </div>
+
+                 {/* Live Computation Grid */}
+                 <div className="space-y-6">
+                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5 pb-4">
+                       <span>Risk Pillar</span>
+                       <span>Live Weight Calculation</span>
+                    </div>
+
+                    <div className="space-y-4">
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                             <div className="w-2 h-2 rounded-full bg-teal-500" />
+                             <span className="text-sm font-bold text-white uppercase tracking-tighter">Financial Risk (F)</span>
+                          </div>
+                          <div className="text-right">
+                             <span className="font-mono text-teal-400 font-black">{fWeight.toFixed(2)}</span>
+                             <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{farmerData?.loanDaysOverdue} Days Overdue</div>
+                          </div>
+                       </div>
+
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                             <div className="w-2 h-2 rounded-full bg-teal-500" />
+                             <span className="text-sm font-bold text-white uppercase tracking-tighter">Production Risk (P)</span>
+                          </div>
+                          <div className="text-right">
+                             <span className="font-mono text-teal-400 font-black">{pWeight.toFixed(2)}</span>
+                             <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{farmerData?.cropOutcome} Outcome // {farmerData?.landSize} Acres</div>
+                          </div>
+                       </div>
+
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                             <div className="w-2 h-2 rounded-full bg-teal-500" />
+                             <span className="text-sm font-bold text-white uppercase tracking-tighter">Market Risk (M)</span>
+                          </div>
+                          <div className="text-right">
+                             <span className="font-mono text-teal-400 font-black">{mWeight.toFixed(2)}</span>
+                             <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{farmerData?.marketActivity} Activity</div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Conditional Multipliers / Alerts */}
+                 <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
+                    <div className={`p-4 rounded-3xl border-2 flex flex-col gap-1 ${Number(farmerData?.loanDaysOverdue) > 90 ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/10 opacity-40'}`}>
+                       <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">NPA Protocol</span>
+                       <span className={`text-[10px] font-black ${Number(farmerData?.loanDaysOverdue) > 90 ? 'text-red-500' : 'text-slate-400'}`}>
+                          {Number(farmerData?.loanDaysOverdue) > 90 ? 'TRIGGERED: +1.0 F' : 'INACTIVE'}
+                       </span>
+                    </div>
+                    <div className={`p-4 rounded-3xl border-2 flex flex-col gap-1 ${hasDebtTrap ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-white/5 border-white/10 opacity-40'}`}>
+                       <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Debt Trap Multiplier</span>
+                       <span className={`text-[10px] font-black ${hasDebtTrap ? 'text-yellow-500' : 'text-slate-400'}`}>
+                          {hasDebtTrap ? 'ACTIVE (×1.2)' : 'NOMINAL'}
+                       </span>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
       
       {/* Dynamic Background Noise */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay">

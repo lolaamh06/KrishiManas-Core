@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, User, MapPin, CreditCard, Leaf, Calculator, ArrowRight, Loader2, Home } from 'lucide-react';
+import { Mic, User, MapPin, CreditCard, Leaf, Calculator, ArrowRight, Loader2, Home, ShieldCheck, CheckCircle } from 'lucide-react';
 import { useSpeech } from '../hooks/useSpeech';
 import { useLang } from '../contexts/LanguageContext';
 import { calculateDistressScore } from '../utils/scoring';
@@ -36,6 +36,7 @@ export default function FarmerOnboarding() {
   const { currentUser } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: currentUser?.name || '', village: '', taluk: 'Hassan', aadhaar: '',
     crop: '', cropOutcome: 'Good', landSize: '',
@@ -86,17 +87,19 @@ export default function FarmerOnboarding() {
         score,
         status,
         hasOnboarded: true,
-        assignedMitraId: null, // Reset for claim
+        assignedMitraId: null,
         lastUpdated: serverTimestamp()
       });
 
       fb.logActivity('REGISTER', `${formData.name} completed onboarding from ${formData.taluk} sector.`);
       
-      // Update local cache
       const updated = { ...currentUser, ...formData, score, status, hasOnboarded: true };
       localStorage.setItem('krishimanas_auth_farmer', JSON.stringify(updated));
       
-      navigate('/farmer/dashboard');
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate('/farmer/dashboard');
+      }, 2000);
     } catch (e) {
       console.error("Submission failed", e);
       setLoading(false);
@@ -239,10 +242,11 @@ export default function FarmerOnboarding() {
                   <button onClick={() => setStep(2)} className="w-1/3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-white/10 text-slate-400 hover:bg-white/5 transition-all">Back</button>
                   <button 
                     onClick={submitForm}
-                    disabled={loading}
-                    className="w-2/3 bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex justify-center items-center gap-3 hover:bg-red-500 shadow-xl shadow-red-600/20 hover:scale-[1.02] active:scale-95 transition-all"
+                    disabled={loading || showSuccess}
+                    className="w-2/3 bg-teal-500 text-[#020617] py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex justify-center items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-teal-500/20 disabled:opacity-50"
                   >
-                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'Finalize Deployment'}
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
+                    {loading ? 'Initializing Protocol...' : 'Finalize Deployment'}
                   </button>
                 </div>
               </div>
@@ -250,6 +254,19 @@ export default function FarmerOnboarding() {
           </div>
         </div>
       </div>
+
+      {/* Deployment Success Overlay */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500">
+           <div className="text-center space-y-6">
+              <div className="w-24 h-24 bg-teal-500/10 border border-teal-500/30 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                 <CheckCircle className="text-teal-500" size={48} />
+              </div>
+              <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Deployment Successful</h2>
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Syncing Telemetry with Regional Hub...</p>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

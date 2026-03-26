@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import LandingPage from './pages/LandingPage';
 import FarmerOnboarding from './pages/FarmerOnboarding';
@@ -23,6 +23,7 @@ export default function App() {
           <Route path="/farmer" element={<FarmerOnboarding />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/mitra" element={<MitraPortal />} />
+          <Route path="/mitra/portal" element={<Navigate to="/mitra" replace />} />
           <Route path="/qr" element={<QRPage />} />
           <Route path="/news/:slug" element={<NewsDetail />} />
         </Routes>

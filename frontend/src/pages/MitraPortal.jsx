@@ -103,7 +103,8 @@ export default function MitraPortal() {
         setSosSignal(null);
       }
     }, (err) => {
-      console.warn("SOS Feed Index Required. Silent fallback active.", err);
+      console.error("CRITICAL: SOS Feed Index Required.", err);
+      console.warn("If you see a Firebase Index Error above, please click the generated link in the console to create it.");
     });
 
     return () => {
