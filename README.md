@@ -1,85 +1,73 @@
-# KrishiManas 2.0 - Agri-Resilience Protocol
+# KrishiManas 2.0 - Agri-Resilience & AI Protocol
 
-KrishiManas is a comprehensive digital defense system designed to monitor farmer distress, provide real-time AI-driven scheme matching, and enable rapid volunteer (Mitra) interventions.
+KrishiManas is a high-fidelity digital defense system designed to monitor farmer distress, provide real-time AI-driven diagnostics, and enable rapid volunteer (Mitra) interventions across Karnataka.
+
+---
+
+## 🌟 Key Features
+
+- **Professional 14-Day Diagnostic Protocol**: A strict evaluation window that recalculates the Distress Performance Index (DPI) every two weeks, ensuring high-frequency monitoring.
+- **Socio-Economic Resilience Audit**: Government-style multi-dimensional assessment covering Financial, Social, and Psychological risk factors.
+- **Gemini-Powered AI Chatbot**: A context-aware assistant helping farmers navigate schemes and distress management using Google's 1.5 Flash model.
+- **Bilingual Core**: Full native support for **Kannada** and **English**, including pre-scripted Audio Guides for offline-first accessibility.
+- **Strategic Command Center**: Projector-friendly dark-theme analytics for district administrators.
 
 ---
 
 ## 🏗️ Project Architecture
 
 The repository is modularized into two primary ecosystems:
-- **`frontend/`**: A React + Vite application powering the distinct Portals (Farmer Console, Mitra Response, Admin Command Center, and the Master QR Hub).
-- **`backend/`**: A Node.js configured environment (if applicable) handling background API operations, Mock Twilio integration, and data management.
+- **`frontend/`**: React + Vite application powering the Portals (Farmer, Mitra, Admin, and QR Hub).
+- **`backend/`**: Node.js environment handling background operations and mock telemetry.
 
 ---
 
 ## 🚀 Installation & Run Instructions
 
 ### Prerequisites
-Before running the application locally, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v16+ recommended)
 - `npm` (comes with Node.js)
+- **Gemini API Key** (Get one from [Google AI Studio](https://aistudio.google.com/))
 
-### 1. Frontend Setup (UI & Portals)
-The frontend contains the interactive React application.
-
-Open your terminal and navigate to the frontend folder:
+### 1. Frontend Setup
 ```bash
 cd frontend
-```
-
-Install the required dependencies:
-```bash
 npm install
-```
-
-Start the Vite development server:
-```bash
 npm run dev
 ```
-*The terminal will provide a local URL (usually `http://localhost:5173`). Open this link in your browser to view the Landing Page.*
 
-### 2. Backend Setup (APIs & Services)
-If a corresponding backend server needs to run alongside the UI:
-
-Open a new terminal window and navigate to the backend folder:
+### 2. Backend Setup
 ```bash
 cd backend
-```
-
-Install the backend dependencies:
-```bash
 npm install
+npm run dev
 ```
-
-Start the backend server:
-```bash
-npm start
-```
-*(Alternatively, use `npm run dev` if `nodemon` is configured for development).*
 
 ---
 
 ## ⚙️ Environment Variables (.env)
-*⚠️ Note: `.env` files contain sensitive API keys and are strictly ignored by Git.*
+*⚠️ Note: `.env` files are strictly ignored by Git. You must create them manually.*
 
-To fully configure real-time features like Firebase or SMS integration, you must create an environment file.
-
-1. **Inside the `frontend/` directory**, create a file named `.env`.
-2. Add your variable keys. Example:
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key_here
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   ```
-
-*(Currently, the app defaults to a robust "Mock Mode" for testing without requiring active Firebase Authentication configuration).*
+**`frontend/.env` Configuration:**
+```env
+VITE_FIREBASE_API_KEY=your_firebase_key
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_GEMINI_API_KEY=your_actual_gemini_key_here
+```
 
 ---
 
-## 🌐 Accessing the Regional Portals
-Once the frontend server is active, access the sub-systems via the Landing Page routes:
-
+## 🌐 Regional Portals
 - **Landing Page**: `http://localhost:5173/`
 - **Farmer Console**: `http://localhost:5173/farmer/dashboard`
-- **Volunteer (Mitra) Gateway**: `http://localhost:5173/mitra`
-- **District Admin Engine**: `http://localhost:5173/admin`
-- **QR Asset Distribution**: `http://localhost:5173/qr`
+- **Volunteer Gateway**: `http://localhost:5173/mitra`
+- **Admin Engine**: `http://localhost:5173/admin`
+- **QR Asset Hub**: `http://localhost:5173/qr`
+
+---
+
+## ⚖️ Open Data Initiative
+KrishiManas maintains an open research dataset for agrarian resilience studies. You can download the latest mock-dataset for simulation purposes directly from the landing page.
+
+---
+© 2026 KrishiManas Engine // PS-05 Open Innovation Initiative

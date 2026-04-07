@@ -50,6 +50,7 @@ backend/test_routes.js
 backend/test_scoring.js
 backend/utils/scoring.js
 debug_dashboard.js
+frontend/.env.example
 frontend/.git/COMMIT_EDITMSG
 frontend/.git/config
 frontend/.git/description
@@ -1152,349 +1153,6 @@ exit 0
 4331dc3f5ae9e1e52c4924f307577f91729ba0d9
 </file>
 
-<file path="frontend/src/components/Chatbot.jsx">
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Sparkles, AlertCircle, User, Bot, Loader2 } from 'lucide-react';
-import { useChat } from '../contexts/ChatContext';
-
-/**
- * Global Persistent Chatbot Component
- */
-
-const Chatbot = () => {
-  const { messages, sendMessage, isThinking, isOpen, setIsOpen } = useChat();
-  const [input, setInput] = useState('');
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, isThinking]);
-
-  const handleSend = () => {
-    if (!input.trim() || isThinking) return;
-    sendMessage(input);
-    setInput('');
-  };
-
-  return (
-    <div className="fixed bottom-8 right-8 z-[3000]">
-      {/* Toggle Button */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 ${isOpen ? 'bg-slate-900 text-white rotate-90' : 'bg-teal-500 text-slate-900'}`}
-      >
-        {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
-        {!isOpen && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-[#020617] animate-pulse" />
-        )}
-      </button>
-
-      {/* Chat Window */}
-      {isOpen && (
-        <div className="absolute bottom-24 right-0 w-[380px] md:w-[400px] h-[550px] md:h-[600px] bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-500">
-          
-          <div className="p-6 border-b border-white/5 bg-slate-900/50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-500/20 flex items-center justify-center text-teal-400 border border-teal-500/30">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <div className="text-sm font-black text-white tracking-widest uppercase">KrishiManas Assistant</div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Global Persistent Engine</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
-          >
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-top-2 duration-300`}>
-                <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${msg.role === 'user' ? 'bg-teal-500 border-teal-400 text-slate-900' : 'bg-slate-800 border-white/5 text-slate-400'}`}>
-                    {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                  </div>
-                  <div className={`p-4 rounded-2xl text-sm font-medium leading-relaxed ${msg.role === 'user' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-tr-none' : 'bg-slate-800/50 text-slate-300 border border-white/5 rounded-tl-none'}`}>
-                    {msg.text}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {isThinking && (
-              <div className="flex justify-start animate-pulse">
-                <div className="flex gap-3 max-w-[85%]">
-                  <div className="w-8 h-8 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-teal-400">
-                    <Loader2 size={16} className="animate-spin" />
-                  </div>
-                  <div className="p-4 rounded-2xl bg-slate-800/30 text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    Thinking...
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-6 bg-slate-900/80 border-t border-white/5">
-            <div className="relative group">
-              <input 
-                type="text" 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="How can I help you today?"
-                className="w-full pl-6 pr-14 py-4 bg-slate-800 border border-white/5 rounded-2xl text-sm text-white font-bold tracking-tight focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/40 transition-all outline-none"
-              />
-              <button 
-                onClick={handleSend}
-                disabled={!input.trim() || isThinking}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${input.trim() && !isThinking ? 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20' : 'bg-slate-700 text-slate-500'}`}
-              >
-                <Send size={18} fill="currentColor" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-      `}</style>
-    </div>
-  );
-};
-
-export default Chatbot;
-</file>
-
-<file path="frontend/src/contexts/ChatContext.jsx">
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getLocalResponse } from '../utils/localBotLogic';
-import { getAIResponse } from '../utils/geminiService';
-import { getFallbackResponse } from '../utils/fallbackGenerator';
-import { useAuth } from './AuthContext';
-
-const ChatContext = createContext();
-
-export const ChatProvider = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: "Namaste! I am your KrishiManas assistant. How can I help you explore the platform today?", timestamp: Date.now() }
-  ]);
-  const [isThinking, setIsThinking] = useState(false);
-
-  // Update welcome message when user logs in
-  useEffect(() => {
-    if (currentUser) {
-      setMessages(prev => [
-        ...prev, 
-        { role: 'bot', text: `Welcome back, ${currentUser.name || 'Member'}! I'm now synced with your personal dashboard and records.`, timestamp: Date.now() }
-      ]);
-    }
-  }, [currentUser]);
-
-  const sendMessage = async (input) => {
-    if (!input.trim()) return;
-
-    // 1. Add user message
-    const userMsg = { role: 'user', text: input, timestamp: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
-    setIsThinking(true);
-
-    // Get current context (Farmer data or general user info)
-    const contextData = currentUser || { name: 'Visitor', role: 'visitor' };
-
-    try {
-      // 2. LAYER 1: Try Local Logic
-      const localResponse = getLocalResponse(input, contextData);
-      if (localResponse) {
-        setMessages(prev => [...prev, { role: 'bot', text: localResponse, timestamp: Date.now() }]);
-        setIsThinking(false);
-        return;
-      }
-
-      // 3. LAYER 2: Try Gemini AI
-      try {
-        const aiResponse = await getAIResponse(input, contextData);
-        setMessages(prev => [...prev, { role: 'bot', text: aiResponse, timestamp: Date.now() }]);
-      } catch (aiError) {
-        console.error("Layer 2 Failed, switching to Fallback", aiError);
-        // 4. LAYER 3: Fallback Logic
-        const fallbackResponse = getFallbackResponse(input, contextData);
-        setMessages(prev => [...prev, { role: 'bot', text: fallbackResponse, timestamp: Date.now() }]);
-      }
-    } catch (criticalError) {
-      console.error("Critical Chatbot Error:", criticalError);
-      setMessages(prev => [...prev, { role: 'bot', text: "Connectivity issues. I'm here to help as soon as I'm back online.", timestamp: Date.now() }]);
-    } finally {
-      setIsThinking(false);
-    }
-  };
-
-  return (
-    <ChatContext.Provider value={{ messages, sendMessage, isThinking, isOpen, setIsOpen }}>
-      {children}
-    </ChatContext.Provider>
-  );
-};
-
-export const useChat = () => {
-    const context = useContext(ChatContext);
-    if (!context) throw new Error("useChat must be used within a ChatProvider");
-    return context;
-};
-</file>
-
-<file path="frontend/src/utils/fallbackGenerator.js">
-/**
- * Layer 3: Fallback Layer (Critical Reliability Requirement)
- * Gracefully switches to structured templates if AI fails.
- */
-
-export const getFallbackResponse = (query, farmerData) => {
-  const score = farmerData.score || 50;
-  const crop = farmerData.crop || 'crops';
-  const name = farmerData.name || 'Farmer';
-
-  const templates = [
-    `I'm currently working with limited connectivity, but looking at your ${crop} cultivation in ${farmerData.taluk}, I suggest reviewing the latest weather advisories. Your current score is ${score}.`,
-    `Namaste ${name}, I am having trouble connecting to my AI core, but I can see you're an active part of the ${farmerData.taluk} sector. If you need immediate help, please use the SOS button.`,
-    `I've noted your message about "${query}". While I wait for a full sync, I recommend checking your matched schemes for new financial support options.`,
-    `Connectivity is currently low, but based on your profile, your assigned Mitra (${farmerData.assignedMitraName || 'Regional HQ'}) is the best person to guide you on this specific query right now.`
-  ];
-
-  // Pick a random template to avoid sounding robotic
-  return templates[Math.floor(Math.random() * templates.length)];
-};
-</file>
-
-<file path="frontend/src/utils/geminiService.js">
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-/**
- * Layer 2: Secondary Response Layer (AI Integration using Gemini)
- * Routes generic or complex queries to Gemini with full user context.
- */
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-export const getAIResponse = async (query, farmerData) => {
-  if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
-    throw new Error("Gemini API Key missing or invalid.");
-  }
-
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const systemPrompt = `
-      You are an expert AI agricultural assistant for "KrishiManas", a mental health and financial support platform for farmers.
-      Your primary goal is to provide concise, context-aware, and actionable suggestions.
-      
-      USER CONTEXT:
-      - Name: ${farmerData.name}
-      - Taluk: ${farmerData.taluk}
-      - Crop: ${farmerData.crop}
-      - Distress Score: ${farmerData.score} (Higher is more critical)
-      - Loan Overdue: ${farmerData.loanDaysOverdue} days
-      - Assigned Mitra: ${farmerData.assignedMitraName || 'None'}
-      
-      GUIDELINES:
-      - Keep responses VERY short (max 3 sentences).
-      - Be empathetic but professional.
-      - If the user is in distress (Score > 65), encourage them to use the SOS button or talk to their Mitra.
-      - Provide specific advice related to their crop (${farmerData.crop}) or location (${farmerData.taluk}) when relevant.
-      - Avoid generic statements. Provide actionable steps.
-    `;
-
-    const result = await model.generateContent([systemPrompt, query]);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error("Gemini AI Error:", error);
-    throw error; // Handled by Fallback Layer
-  }
-};
-</file>
-
-<file path="frontend/src/utils/localBotLogic.js">
-/**
- * Layer 1: Primary Response Layer (Local / Rule-Based)
- * Provides instant responses for predictable, structured questions.
- * Handles: Visitor, Farmer, Mitra, Admin.
- */
-
-export const getLocalResponse = (query, userData) => {
-  const q = query.toLowerCase();
-  const role = (userData.roles && userData.roles.includes('admin')) ? 'admin' : 
-               (userData.roles && userData.roles.includes('mitra')) ? 'mitra' : 
-               (userData.roles && userData.roles.includes('farmer')) ? 'farmer' : 'visitor';
-  
-  // --- 1. GENERAL / VISITOR LOGIC ---
-  if (role === 'visitor') {
-    if (q.includes('registration') || q.includes('join') || q.includes('onboard')) {
-      return "Welcome to KrishiManas! You can register as a Farmer to get personalized support, or join as a Mitra to help your community. Click the icons on our dashboard to start.";
-    }
-    if (q.includes('what') && q.includes('this')) {
-      return "KrishiManas is a regional support platform combining financial data and mental health resources to help farmers stay resilient. We use real-time monitoring to provide early intervention.";
-    }
-  }
-
-  // --- 2. FARMER LOGIC ---
-  if (role === 'farmer') {
-    if (q.includes('score') || q.includes('status') || q.includes('points')) {
-        const score = userData.score || 50;
-        const zone = score >= 65 ? 'Urgent' : (score >= 35 ? 'Watch' : 'Safe');
-        return `Your current distress score is **${score}** (${zone} zone). Your trajectory is ${userData.trajectory || 'Stable'}.`;
-    }
-    if (q.includes('loan') || q.includes('money')) {
-        return `You have a loan status recorded in the **${userData.taluk}** sector. Please check your dashboard for details on overdue days and repayment status.`;
-    }
-  }
-
-  // --- 3. MITRA / ADMIN LOGIC ---
-  if (role === 'admin' || role === 'mitra') {
-    if (q.includes('case') || q.includes('farmer') || q.includes('active')) {
-      return "You can view all active and priority cases in your dashboard queue. Red markers on the map indicate entities requiring immediate intervention.";
-    }
-    if (q.includes('sos') || q.includes('emergency')) {
-      return "Incoming SOS signals are broadcasted to all active Mitras in the sector. You can 'Intercept' a case directly from the dashboard overlay.";
-    }
-  }
-
-  // --- 4. SHARED LOGIC ---
-  if (q.includes('hi') || q.includes('hello') || q.includes('namaste')) {
-    return `Namaste ${userData.name || 'friend'}! I am here to help you navigate the KrishiManas system as a ${role}. What's on your mind?`;
-  }
-
-  return null; // Move to Next Layer (Gemini AI)
-};
-</file>
-
-<file path=".gitignore">
-node_modules/
-.env
-.env.local
-.env.*.local
-dist/
-build/
-.DS_Store
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.idea/
-.vscode/
-</file>
-
 <file path="backend/data.js">
 const farmers = [
   {
@@ -2097,6 +1755,22 @@ const puppeteer = require('puppeteer');
     await browser.close();
   }
 })();
+</file>
+
+<file path="frontend/.env.example">
+# KrishiManas Frontend API configuration
+VITE_API_URL=http://localhost:5000
+
+# Gemini AI Integration
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 </file>
 
 <file path="frontend/.gitignore">
@@ -8173,6 +7847,129 @@ export default defineConfig({
 <svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
 </file>
 
+<file path="frontend/src/components/Chatbot.jsx">
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageSquare, X, Send, Sparkles, AlertCircle, User, Bot, Loader2 } from 'lucide-react';
+import { useChat } from '../contexts/ChatContext';
+
+/**
+ * Global Persistent Chatbot Component
+ */
+
+const Chatbot = () => {
+  const { messages, sendMessage, isThinking, isOpen, setIsOpen } = useChat();
+  const [input, setInput] = useState('');
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isThinking]);
+
+  const handleSend = () => {
+    if (!input.trim() || isThinking) return;
+    sendMessage(input);
+    setInput('');
+  };
+
+  return (
+    <div className="fixed bottom-8 right-8 z-[3000]">
+      {/* Toggle Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 ${isOpen ? 'bg-slate-900 text-white rotate-90' : 'bg-teal-500 text-slate-900'}`}
+      >
+        {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
+        {!isOpen && (
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-[#020617] animate-pulse" />
+        )}
+      </button>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="absolute bottom-24 right-0 w-[380px] md:w-[400px] h-[550px] md:h-[600px] bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-500">
+          
+          <div className="p-6 border-b border-white/5 bg-slate-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-teal-500/20 flex items-center justify-center text-teal-400 border border-teal-500/30">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-black text-white tracking-widest uppercase">KrishiManas Assistant</div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Global Persistent Engine</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div 
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
+          >
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-top-2 duration-300`}>
+                <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${msg.role === 'user' ? 'bg-teal-500 border-teal-400 text-slate-900' : 'bg-slate-800 border-white/5 text-slate-400'}`}>
+                    {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+                  </div>
+                  <div className={`p-4 rounded-2xl text-sm font-medium leading-relaxed ${msg.role === 'user' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-tr-none' : 'bg-slate-800/50 text-slate-300 border border-white/5 rounded-tl-none'}`}>
+                    {msg.text}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {isThinking && (
+              <div className="flex justify-start animate-pulse">
+                <div className="flex gap-3 max-w-[85%]">
+                  <div className="w-8 h-8 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-teal-400">
+                    <Loader2 size={16} className="animate-spin" />
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-800/30 text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    Thinking...
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 bg-slate-900/80 border-t border-white/5">
+            <div className="relative group">
+              <input 
+                type="text" 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="How can I help you today?"
+                className="w-full pl-6 pr-14 py-4 bg-slate-800 border border-white/5 rounded-2xl text-sm text-white font-bold tracking-tight focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/40 transition-all outline-none"
+              />
+              <button 
+                onClick={handleSend}
+                disabled={!input.trim() || isThinking}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${input.trim() && !isThinking ? 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20' : 'bg-slate-700 text-slate-500'}`}
+              >
+                <Send size={18} fill="currentColor" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+      `}</style>
+    </div>
+  );
+};
+
+export default Chatbot;
+</file>
+
 <file path="frontend/src/components/ErrorBoundary.jsx">
 import React from 'react';
 
@@ -8490,6 +8287,85 @@ const VoiceInput = ({
 };
 
 export default VoiceInput;
+</file>
+
+<file path="frontend/src/contexts/ChatContext.jsx">
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getLocalResponse } from '../utils/localBotLogic';
+import { getAIResponse } from '../utils/geminiService';
+import { getFallbackResponse } from '../utils/fallbackGenerator';
+import { useAuth } from './AuthContext';
+
+const ChatContext = createContext();
+
+export const ChatProvider = ({ children }) => {
+  const { currentUser } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'bot', text: "Namaste! I am your KrishiManas assistant. How can I help you explore the platform today?", timestamp: Date.now() }
+  ]);
+  const [isThinking, setIsThinking] = useState(false);
+
+  // Update welcome message when user logs in
+  useEffect(() => {
+    if (currentUser) {
+      setMessages(prev => [
+        ...prev, 
+        { role: 'bot', text: `Welcome back, ${currentUser.name || 'Member'}! I'm now synced with your personal dashboard and records.`, timestamp: Date.now() }
+      ]);
+    }
+  }, [currentUser]);
+
+  const sendMessage = async (input) => {
+    if (!input.trim()) return;
+
+    // 1. Add user message
+    const userMsg = { role: 'user', text: input, timestamp: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
+    setIsThinking(true);
+
+    // Get current context (Farmer data or general user info)
+    const contextData = currentUser || { name: 'Visitor', role: 'visitor' };
+
+    try {
+      // 2. LAYER 1: Try Local Logic
+      const localResponse = getLocalResponse(input, contextData);
+      if (localResponse) {
+        setMessages(prev => [...prev, { role: 'bot', text: localResponse, timestamp: Date.now() }]);
+        setIsThinking(false);
+        return;
+      }
+
+      // 3. LAYER 2: Try Gemini AI
+      try {
+        const aiResponse = await getAIResponse(input, contextData);
+        setMessages(prev => [...prev, { role: 'bot', text: aiResponse, timestamp: Date.now() }]);
+      } catch (aiError) {
+        console.error("Layer 2 Failed, switching to Fallback", aiError);
+        // 4. LAYER 3: Fallback Logic
+        const fallbackResponse = getFallbackResponse(input, contextData);
+        setMessages(prev => [...prev, { role: 'bot', text: fallbackResponse, timestamp: Date.now() }]);
+      }
+    } catch (criticalError) {
+      console.error("Critical Chatbot Error:", criticalError);
+      setMessages(prev => [...prev, { role: 'bot', text: "Connectivity issues. I'm here to help as soon as I'm back online.", timestamp: Date.now() }]);
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  return (
+    <ChatContext.Provider value={{ messages, sendMessage, isThinking, isOpen, setIsOpen }}>
+      {children}
+    </ChatContext.Provider>
+  );
+};
+
+export const useChat = () => {
+    const context = useContext(ChatContext);
+    if (!context) throw new Error("useChat must be used within a ChatProvider");
+    return context;
+};
 </file>
 
 <file path="frontend/src/data/newsData.js">
@@ -9509,6 +9385,78 @@ export default function QRPage() {
 }
 </file>
 
+<file path="frontend/src/utils/fallbackGenerator.js">
+/**
+ * Layer 3: Fallback Layer (Critical Reliability Requirement)
+ * Gracefully switches to structured templates if AI fails.
+ */
+
+export const getFallbackResponse = (query, farmerData) => {
+  const score = farmerData.score || 50;
+  const crop = farmerData.crop || 'crops';
+  const name = farmerData.name || 'Farmer';
+
+  const templates = [
+    `I'm currently working with limited connectivity, but looking at your ${crop} cultivation in ${farmerData.taluk}, I suggest reviewing the latest weather advisories. Your current score is ${score}.`,
+    `Namaste ${name}, I am having trouble connecting to my AI core, but I can see you're an active part of the ${farmerData.taluk} sector. If you need immediate help, please use the SOS button.`,
+    `I've noted your message about "${query}". While I wait for a full sync, I recommend checking your matched schemes for new financial support options.`,
+    `Connectivity is currently low, but based on your profile, your assigned Mitra (${farmerData.assignedMitraName || 'Regional HQ'}) is the best person to guide you on this specific query right now.`
+  ];
+
+  // Pick a random template to avoid sounding robotic
+  return templates[Math.floor(Math.random() * templates.length)];
+};
+</file>
+
+<file path="frontend/src/utils/geminiService.js">
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+/**
+ * Layer 2: Secondary Response Layer (AI Integration using Gemini)
+ * Routes generic or complex queries to Gemini with full user context.
+ */
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+export const getAIResponse = async (query, farmerData) => {
+  if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
+    throw new Error("Gemini API Key missing or invalid.");
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const systemPrompt = `
+      You are an expert AI agricultural assistant for "KrishiManas", a mental health and financial support platform for farmers.
+      Your primary goal is to provide concise, context-aware, and actionable suggestions.
+      
+      USER CONTEXT:
+      - Name: ${farmerData.name}
+      - Taluk: ${farmerData.taluk}
+      - Crop: ${farmerData.crop}
+      - Distress Score: ${farmerData.score} (Higher is more critical)
+      - Loan Overdue: ${farmerData.loanDaysOverdue} days
+      - Assigned Mitra: ${farmerData.assignedMitraName || 'None'}
+      
+      GUIDELINES:
+      - Keep responses VERY short (max 3 sentences).
+      - Be empathetic but professional.
+      - If the user is in distress (Score > 65), encourage them to use the SOS button or talk to their Mitra.
+      - Provide specific advice related to their crop (${farmerData.crop}) or location (${farmerData.taluk}) when relevant.
+      - Avoid generic statements. Provide actionable steps.
+    `;
+
+    const result = await model.generateContent([systemPrompt, query]);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error("Gemini AI Error:", error);
+    throw error; // Handled by Fallback Layer
+  }
+};
+</file>
+
 <file path="frontend/src/utils/matchSchemes.js">
 /**
  * District-Aware AI Scheme Matcher for KrishiManas.
@@ -9838,134 +9786,114 @@ The UI heavily prioritizes "Premium Reassurance." The dark navy/slate themes con
 </file>
 
 <file path="README.md">
-# KrishiManas 2.0 - Agri-Resilience Protocol
+# KrishiManas 2.0 - Agri-Resilience & AI Protocol
 
-KrishiManas is a comprehensive digital defense system designed to monitor farmer distress, provide real-time AI-driven scheme matching, and enable rapid volunteer (Mitra) interventions.
+KrishiManas is a high-fidelity digital defense system designed to monitor farmer distress, provide real-time AI-driven diagnostics, and enable rapid volunteer (Mitra) interventions across Karnataka.
+
+---
+
+## 🌟 Key Features
+
+- **Professional 14-Day Diagnostic Protocol**: A strict evaluation window that recalculates the Distress Performance Index (DPI) every two weeks, ensuring high-frequency monitoring.
+- **Socio-Economic Resilience Audit**: Government-style multi-dimensional assessment covering Financial, Social, and Psychological risk factors.
+- **Gemini-Powered AI Chatbot**: A context-aware assistant helping farmers navigate schemes and distress management using Google's 1.5 Flash model.
+- **Bilingual Core**: Full native support for **Kannada** and **English**, including pre-scripted Audio Guides for offline-first accessibility.
+- **Strategic Command Center**: Projector-friendly dark-theme analytics for district administrators.
 
 ---
 
 ## 🏗️ Project Architecture
 
 The repository is modularized into two primary ecosystems:
-- **`frontend/`**: A React + Vite application powering the distinct Portals (Farmer Console, Mitra Response, Admin Command Center, and the Master QR Hub).
-- **`backend/`**: A Node.js configured environment (if applicable) handling background API operations, Mock Twilio integration, and data management.
+- **`frontend/`**: React + Vite application powering the Portals (Farmer, Mitra, Admin, and QR Hub).
+- **`backend/`**: Node.js environment handling background operations and mock telemetry.
 
 ---
 
 ## 🚀 Installation & Run Instructions
 
 ### Prerequisites
-Before running the application locally, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v16+ recommended)
 - `npm` (comes with Node.js)
+- **Gemini API Key** (Get one from [Google AI Studio](https://aistudio.google.com/))
 
-### 1. Frontend Setup (UI & Portals)
-The frontend contains the interactive React application.
-
-Open your terminal and navigate to the frontend folder:
+### 1. Frontend Setup
 ```bash
 cd frontend
-```
-
-Install the required dependencies:
-```bash
 npm install
-```
-
-Start the Vite development server:
-```bash
 npm run dev
 ```
-*The terminal will provide a local URL (usually `http://localhost:5173`). Open this link in your browser to view the Landing Page.*
 
-### 2. Backend Setup (APIs & Services)
-If a corresponding backend server needs to run alongside the UI:
-
-Open a new terminal window and navigate to the backend folder:
+### 2. Backend Setup
 ```bash
 cd backend
-```
-
-Install the backend dependencies:
-```bash
 npm install
+npm run dev
 ```
-
-Start the backend server:
-```bash
-npm start
-```
-*(Alternatively, use `npm run dev` if `nodemon` is configured for development).*
 
 ---
 
 ## ⚙️ Environment Variables (.env)
-*⚠️ Note: `.env` files contain sensitive API keys and are strictly ignored by Git.*
+*⚠️ Note: `.env` files are strictly ignored by Git. You must create them manually.*
 
-To fully configure real-time features like Firebase or SMS integration, you must create an environment file.
-
-1. **Inside the `frontend/` directory**, create a file named `.env`.
-2. Add your variable keys. Example:
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key_here
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   ```
-
-*(Currently, the app defaults to a robust "Mock Mode" for testing without requiring active Firebase Authentication configuration).*
+**`frontend/.env` Configuration:**
+```env
+VITE_FIREBASE_API_KEY=your_firebase_key
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_GEMINI_API_KEY=your_actual_gemini_key_here
+```
 
 ---
 
-## 🌐 Accessing the Regional Portals
-Once the frontend server is active, access the sub-systems via the Landing Page routes:
-
+## 🌐 Regional Portals
 - **Landing Page**: `http://localhost:5173/`
 - **Farmer Console**: `http://localhost:5173/farmer/dashboard`
-- **Volunteer (Mitra) Gateway**: `http://localhost:5173/mitra`
-- **District Admin Engine**: `http://localhost:5173/admin`
-- **QR Asset Distribution**: `http://localhost:5173/qr`
+- **Volunteer Gateway**: `http://localhost:5173/mitra`
+- **Admin Engine**: `http://localhost:5173/admin`
+- **QR Asset Hub**: `http://localhost:5173/qr`
+
+---
+
+## ⚖️ Open Data Initiative
+KrishiManas maintains an open research dataset for agrarian resilience studies. You can download the latest mock-dataset for simulation purposes directly from the landing page.
+
+---
+© 2026 KrishiManas Engine // PS-05 Open Innovation Initiative
 </file>
 
-<file path="frontend/package.json">
-{
-  "name": "frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "clsx": "^2.1.1",
-    "firebase": "^12.11.0",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^0.577.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hot-toast": "^2.6.0",
-    "react-leaflet": "^5.0.0",
-    "react-router-dom": "^7.13.1",
-    "recharts": "^3.8.0",
-    "tailwind-merge": "^3.5.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "autoprefixer": "^10.4.27",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^3.4.19",
-    "vite": "^8.0.1"
-  }
-}
+<file path=".gitignore">
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment Files (STRICTLY IGNORED)
+.env
+.env.local
+.env.*.local
+frontend/.env*
+backend/.env*
+!frontend/.env.example
+!backend/.env.example
+
+# Build Artifacts
+dist/
+build/
+frontend/dist/
+backend/dist/
+
+# Logs and Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Editor/System Files
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
 </file>
 
 <file path="frontend/src/components/EcosystemMap.jsx">
@@ -10172,6 +10100,61 @@ export function useTextToSpeech() {
 }
 </file>
 
+<file path="frontend/src/utils/localBotLogic.js">
+/**
+ * Layer 1: Primary Response Layer (Local / Rule-Based)
+ * Provides instant responses for predictable, structured questions.
+ * Handles: Visitor, Farmer, Mitra, Admin.
+ */
+
+export const getLocalResponse = (query, userData) => {
+  const q = query.toLowerCase();
+  const role = (userData.roles && userData.roles.includes('admin')) ? 'admin' : 
+               (userData.roles && userData.roles.includes('mitra')) ? 'mitra' : 
+               (userData.roles && userData.roles.includes('farmer')) ? 'farmer' : 'visitor';
+  
+  // --- 1. GENERAL / VISITOR LOGIC ---
+  if (role === 'visitor') {
+    if (q.includes('registration') || q.includes('join') || q.includes('onboard')) {
+      return "Welcome to KrishiManas! You can register as a Farmer to get personalized support, or join as a Mitra to help your community. Click the icons on our dashboard to start.";
+    }
+    if (q.includes('what') && q.includes('this')) {
+      return "KrishiManas is a regional support platform combining financial data and mental health resources to help farmers stay resilient. We use real-time monitoring to provide early intervention.";
+    }
+  }
+
+  // --- 2. FARMER LOGIC ---
+  if (role === 'farmer') {
+    if (q.includes('score') || q.includes('status') || q.includes('points')) {
+        const score = userData.score || 50;
+        const zone = score >= 65 ? 'Urgent' : (score >= 35 ? 'Watch' : 'Safe');
+        return `Your current distress score is **${score}** (${zone} zone). Your trajectory is ${userData.trajectory || 'Stable'}.`;
+    }
+    if (q.includes('loan') || q.includes('money')) {
+        return `You have a loan status recorded in the **${userData.taluk}** sector. Please check your dashboard for details on overdue days and repayment status.`;
+    }
+  }
+
+  // --- 3. MITRA / ADMIN LOGIC ---
+  if (role === 'admin' || role === 'mitra') {
+    if (q.includes('case') || q.includes('farmer') || q.includes('active')) {
+      return "You can view all active and priority cases in your dashboard queue. Red markers on the map indicate entities requiring immediate intervention.";
+    }
+    if (q.includes('sos') || q.includes('emergency')) {
+      return "Incoming SOS signals are broadcasted to all active Mitras in the sector. You can 'Intercept' a case directly from the dashboard overlay.";
+    }
+  }
+
+  // --- 4. SHARED LOGIC ---
+  // Only trigger local greeting if it's a short, simple opener (less than 15 chars)
+  if ((q.includes('hi') || q.includes('hello') || q.includes('namaste')) && q.length < 15) {
+    return `Namaste ${userData.name || 'friend'}! I am here to help you navigate the KrishiManas system as a ${role}. What's on your mind?`;
+  }
+
+  return null; // Move to Next Layer (Gemini AI)
+};
+</file>
+
 <file path="frontend/src/utils/scoring.js">
 /**
  * Livelihood Vulnerability Index (LVI) Framework Algorithm
@@ -10243,6 +10226,49 @@ export function shouldShowCheckin(lastCheckinDate) {
   const diffTime = Math.abs(now - lastDate);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
   return diffDays >= 14;
+}
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "clsx": "^2.1.1",
+    "firebase": "^12.11.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hot-toast": "^2.6.0",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.0.1"
+  }
 }
 </file>
 
@@ -11031,49 +11057,6 @@ export default function LandingPage() {
 }
 </file>
 
-<file path="frontend/src/App.jsx">
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ChatProvider } from './contexts/ChatContext';
-import LandingPage from './pages/LandingPage';
-import FarmerOnboarding from './pages/FarmerOnboarding';
-import FarmerDashboard from './pages/FarmerDashboard';
-import FarmerCheckin from './pages/FarmerCheckin';
-import AdminDashboard from './pages/AdminDashboard';
-import MitraPortal from './pages/MitraPortal';
-import QRPage from './pages/QRPage';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import Chatbot from './components/Chatbot';
-import NewsDetail from './pages/NewsDetail';
-import GlobalControls from './components/shared/GlobalControls';
-
-export default function App() {
-  return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <ChatProvider>
-          <GlobalControls />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />
-            <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
-            <Route path="/farmer/checkin" element={<FarmerCheckin />} />
-            <Route path="/farmer" element={<FarmerOnboarding />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/mitra" element={<MitraPortal />} />
-            <Route path="/mitra/portal" element={<Navigate to="/mitra" replace />} />
-            <Route path="/qr" element={<QRPage />} />
-            <Route path="/news/:slug" element={<NewsDetail />} />
-          </Routes>
-          <Chatbot />
-        </ChatProvider>
-      </AuthProvider>
-    </ErrorBoundary>
-  );
-}
-</file>
-
 <file path="frontend/src/components/AuthModal.jsx">
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -11735,6 +11718,49 @@ export const fb = {
 };
 
 export { auth, db, isConfigured };
+</file>
+
+<file path="frontend/src/App.jsx">
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ChatProvider } from './contexts/ChatContext';
+import LandingPage from './pages/LandingPage';
+import FarmerOnboarding from './pages/FarmerOnboarding';
+import FarmerDashboard from './pages/FarmerDashboard';
+import FarmerCheckin from './pages/FarmerCheckin';
+import AdminDashboard from './pages/AdminDashboard';
+import MitraPortal from './pages/MitraPortal';
+import QRPage from './pages/QRPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import Chatbot from './components/Chatbot';
+import NewsDetail from './pages/NewsDetail';
+import GlobalControls from './components/shared/GlobalControls';
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <ChatProvider>
+          <GlobalControls />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />
+            <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
+            <Route path="/farmer/checkin" element={<FarmerCheckin />} />
+            <Route path="/farmer" element={<FarmerOnboarding />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/mitra" element={<MitraPortal />} />
+            <Route path="/mitra/portal" element={<Navigate to="/mitra" replace />} />
+            <Route path="/qr" element={<QRPage />} />
+            <Route path="/news/:slug" element={<NewsDetail />} />
+          </Routes>
+          <Chatbot />
+        </ChatProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+}
 </file>
 
 <file path="frontend/src/pages/AdminDashboard.jsx">
