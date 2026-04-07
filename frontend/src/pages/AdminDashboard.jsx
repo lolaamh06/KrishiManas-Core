@@ -78,6 +78,7 @@ export default function AdminDashboard() {
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastLog, setBroadcastLog] = useState([]);
   const [criticalAlert, setCriticalAlert] = useState(null); // escalation alert
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Audit Fix: Re-injecting Firestore onSnapshot listeners
   useEffect(() => {
@@ -415,7 +416,7 @@ export default function AdminDashboard() {
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-white/[0.03]">
-                          {[...farmers].sort((a,b) => (b.score || 0) - (a.score || 0)).map(f => (
+                          {[...farmers].sort((a,b) => (b.score || 0) - (a.score || 0)).filter(f => !searchTerm || f.name?.toLowerCase().includes(searchTerm.toLowerCase()) || f.taluk?.toLowerCase().includes(searchTerm.toLowerCase())).map(f => (
                             <tr key={f.id} onClick={() => setSelected(f)} className="hover:bg-white/[0.03] transition-colors cursor-pointer group">
                                <td className="px-10 py-8">
                                   <div className="font-black text-white">{f.name}</div>
