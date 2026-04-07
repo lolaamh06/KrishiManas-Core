@@ -1,73 +1,95 @@
-# KrishiManas 2.0 - Agri-Resilience & AI Protocol
+# KrishiManas: Beyond Growth, Prioritizing Survival 🌾🛡️
 
-KrishiManas is a high-fidelity digital defense system designed to monitor farmer distress, provide real-time AI-driven diagnostics, and enable rapid volunteer (Mitra) interventions across Karnataka.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-teal?style=for-the-badge&logo=vercel)](https://krishi-manas-core.vercel.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
----
+**KrishiManas** is a next-generation agricultural resilience platform designed for the Indian farming ecosystem. While most agri-tech solutions focus on maximizing yield, KrishiManas focuses on the **human behind the plow**. 
 
-## 🌟 Key Features
-
-- **Professional 14-Day Diagnostic Protocol**: A strict evaluation window that recalculates the Distress Performance Index (DPI) every two weeks, ensuring high-frequency monitoring.
-- **Socio-Economic Resilience Audit**: Government-style multi-dimensional assessment covering Financial, Social, and Psychological risk factors.
-- **Gemini-Powered AI Chatbot**: A context-aware assistant helping farmers navigate schemes and distress management using Google's 1.5 Flash model.
-- **Bilingual Core**: Full native support for **Kannada** and **English**, including pre-scripted Audio Guides for offline-first accessibility.
-- **Strategic Command Center**: Projector-friendly dark-theme analytics for district administrators.
+By tracking emotional and financial distress indices (DPI), the platform enables pre-emptive intervention to prevent agricultural crises and farmer suicides before they escalate.
 
 ---
 
-## 🏗️ Project Architecture
+## 📸 Visual Core
 
-The repository is modularized into two primary ecosystems:
-- **`frontend/`**: React + Vite application powering the Portals (Farmer, Mitra, Admin, and QR Hub).
-- **`backend/`**: Node.js environment handling background operations and mock telemetry.
+### 🛰️ The Command Center (Landing)
+A cinematic entrance with glassmorphism and real-time news propagation, designed to bridge the gap between traditional farming and high-tech resilience.
+![Landing Hero](docs/screenshots/landing_hero.png)
+
+### 📊 Farmer Command Console
+Real-time **Distress Performance Index (DPI)** tracking. Farmers follow a strict 14-day professional diagnostic protocol to monitor their agricultural and financial health.
+![Farmer Dashboard](docs/screenshots/farmer_dashboard.png)
+
+### 🧠 KrishiManas Assistant (AI)
+Powered by **Google Gemini 1.5 Flash**, the assistant provides contextual, bilingual (English/Kannada) support for schemes, weather, and crisis management.
+![Chatbot Interaction](docs/screenshots/chatbot.png)
+
+### 🗺️ Tactical Sector Mapping (Admin)
+The administrative hub offers a regional "God-mode" view, mapping distress hotspots and enabling 0-delay emergency broadcast protocols (AIR Broadcast System).
+![Admin Dashboard](docs/screenshots/admin_dashboard.png)
 
 ---
 
-## 🚀 Installation & Run Instructions
+## 🛠️ The Tech Engine
+
+- **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) + [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: React Context API
+- **Backend**: [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)
+- **Database & Auth**: [Firebase](https://firebase.google.com/) (Firestore & Auth)
+- **Intelligence**: [Google Gemini 1.5 Flash API](https://deepmind.google/technologies/gemini/)
+- **Icons & UI**: [Lucide React](https://lucide.dev/) + [Framer Motion](https://www.framer.com/motion/)
+
+---
+
+## 🛡️ Core Innovations
+
+### 1. The 14-Day Diagnostic Protocol
+An immutable diagnostic window that prevents "data fatigue." Farmers can only perform deep-checks every 14 days, ensuring high-quality, reflective data acquisition.
+
+### 2. Dual-Layer AI Response
+- **Local Layer**: Fast, rule-based responses for common greetings and platform navigation.
+- **Gemini AI Layer**: Sophisticated, context-aware agricultural advice and scheme matching based on the farmer's specific DPI status.
+
+### 3. Tactical Sector Alerts
+Admin-controlled "AIR Broadcast System" that can dispatch encrypted emergency protocols to specific distress sectors with sub-60ms internal latency.
+
+---
+
+## ⚡ Quick Start
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v16+ recommended)
-- `npm` (comes with Node.js)
-- **Gemini API Key** (Get one from [Google AI Studio](https://aistudio.google.com/))
+- Node.js v18+
+- Firebase Project
+- Gemini API Key
 
-### 1. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Installation
 
-### 2. Backend Setup
-```bash
-cd backend
-npm install
-npm run dev
-```
+1. **Clone the Repo**
+   ```bash
+   git clone https://github.com/lolaamh06/KrishiManas-Core.git
+   cd KrishiManas-Core
+   ```
 
----
+2. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   # Create a .env file with your VITE_FIREBASE_* and VITE_GEMINI_API_KEY
+   npm run dev
+   ```
 
-## ⚙️ Environment Variables (.env)
-*⚠️ Note: `.env` files are strictly ignored by Git. You must create them manually.*
-
-**`frontend/.env` Configuration:**
-```env
-VITE_FIREBASE_API_KEY=your_firebase_key
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_GEMINI_API_KEY=your_actual_gemini_key_here
-```
+3. **Backend Setup**
+   ```bash
+   cd ../backend
+   npm install
+   # Create a .env file with FIREBASE_ADMIN_SDK details
+   node index.js
+   ```
 
 ---
 
-## 🌐 Regional Portals
-- **Landing Page**: `http://localhost:5173/`
-- **Farmer Console**: `http://localhost:5173/farmer/dashboard`
-- **Volunteer Gateway**: `http://localhost:5173/mitra`
-- **Admin Engine**: `http://localhost:5173/admin`
-- **QR Asset Hub**: `http://localhost:5173/qr`
+## 🌍 Open Data Initiative
+KrishiManas includes a public **Research Dataset** (anonymized) to help university students and policymakers study socio-economic trends in Hassan district and beyond.
 
 ---
 
-## ⚖️ Open Data Initiative
-KrishiManas maintains an open research dataset for agrarian resilience studies. You can download the latest mock-dataset for simulation purposes directly from the landing page.
-
----
-© 2026 KrishiManas Engine // PS-05 Open Innovation Initiative
+*Made with ❤️ for the Indian Farmer.*
