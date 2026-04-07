@@ -1,4 +1,4 @@
-# KrishiManas (v2.5) 🌾🛡️
+# KrishiManas 🌾🛡️
 ## "Beyond growth. Prioritizing survival for the Indian farmer."
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-teal?style=for-the-badge&logo=vercel)](https://krishi-manas-core.vercel.app/)
@@ -94,9 +94,4 @@ Contextual distribution center for localized access points. QR patterns change d
 2. Frontend: `cd frontend && npm install && npm run dev`
 3. Backend: `cd backend && npm install && node index.js`
 
----
 
-## 🤝 Project Lead
-Developed and Architected by **[Lolaa M H](https://github.com/lolaamh06)**.
-
-*For the Indian Farmer. Made with heart and high-fidelity code.*
